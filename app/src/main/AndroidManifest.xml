@@ -6,6 +6,9 @@
         android:label="@string/app_name"
         android:icon="@android:drawable/sym_def_app_icon"
         android:supportsRtl="true"
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
         <activity

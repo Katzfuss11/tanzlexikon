@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-Backup bis Android 11: nur die Datenbank und die Einstellungen. Videos liegen in der Galerie. -->
+<full-backup-content>
+    <include domain="database" path="tanzlexikon.db" />
+    <include domain="sharedpref" path="." />
+</full-backup-content>
