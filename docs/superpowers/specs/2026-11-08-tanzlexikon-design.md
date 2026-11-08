@@ -36,7 +36,7 @@ Jeder Nutzer füllt die App mit **eigenen Inhalten**. Es gibt keine fertige Date
 
 ## Rahmenbedingungen
 
-- Der Autor hat **noch nie eine Android-App entwickelt** und kennt weder die Sprachen noch die Werkzeuge. Zum Plan gehört deshalb eine **Schritt-für-Schritt-Anleitung**: Android Studio installieren, Projekt öffnen, App im Emulator und auf dem eigenen Handy starten, APK bauen. Code und Struktur sollen für einen Anfänger nachvollziehbar bleiben, ohne unnötige Abstraktionen.
+- Der Autor hat **noch nie eine Android-App entwickelt** und kennt weder die Sprachen noch die Werkzeuge. Zum Plan gehört deshalb eine **Schritt-für-Schritt-Anleitung**: Android Studio installieren, Projekt öffnen, App im Emulator und auf dem eigenen Handy starten, APK bauen und **die App auf dem Handy einer anderen Person installieren** (APK verschicken, „Unbekannte Apps installieren“ erlauben, spätere Updates). Für Updates ohne Neuinstallation braucht es von Anfang an einen festen Signaturschlüssel. Er wird sicher außerhalb des Repos aufbewahrt, und die Anleitung erklärt, wie man ihn sichert. Code und Struktur sollen für einen Anfänger nachvollziehbar bleiben, ohne unnötige Abstraktionen.
 - Repo: `C:\Users\<Name>\repos\tanzlexikon`, GitHub `Katzfuss11/tanzlexikon` (zunächst privat, später öffentlich).
 - Die App-Oberfläche ist auf Deutsch. (Mehrsprachigkeit ist nicht nötig, die Texte sollten aber in String-Ressourcen liegen, damit andere später übersetzen können.)
 
@@ -89,6 +89,21 @@ Der Grundsatz lautet: Nichts verschwindet durch einen einzigen Fehltipp.
 - **Wiederherstellen** einer Figur, deren Tanz (oder Kategorie) inzwischen gelöscht wurde: Tanz und gegebenenfalls Kategorie werden **automatisch mit dem alten Namen neu angelegt**. Gibt es schon einen Tanz mit dem Namen in derselben Kategorie, landet die Figur dort.
 - **Mediendateien** in der Galerie werden von der App nie gelöscht, weder beim Entfernen eines Mediums noch beim endgültigen Löschen einer Figur. Weg ist nur der Verweis.
 - Das Entfernen eines einzelnen Mediums oder das Leeren eines Textes im Bearbeitungsmodus läuft nicht über den Papierkorb. (Meine Wahl: Das gilt erst beim Speichern, und man kann die Bearbeitung abbrechen.)
+
+## Figuren teilen
+
+**Entschieden vom Autor:** Das Teilen gehört **in die erste Version**. Getestet wird es mit einem zweiten Nutzer, der die App auf seinem eigenen Handy installiert. Eine einzelne Figur lässt sich teilen. Über „Teilen“ auf der Figurenseite wählt man zwischen zwei Formen, danach öffnet sich das normale Android-Teilen-Menü (WhatsApp, Signal, Mail …):
+
+1. **Als Nachricht:** Name, Tanz und die Texte von Allgemein, Leader und Follower werden als lesbarer Text zusammengesetzt. YouTube-Links stehen im Text, eigene Videos und Bilder gehen als Anhänge mit. Der Empfänger braucht keine App.
+2. **Als Tanzlexikon-Datei:** Eine Datei mit der ganzen Figur, also Texte, Medien und Links, mit eigener Dateiendung (meine Wahl: `.tanzfigur`). Sie ist für Empfänger mit der App gedacht.
+
+**Öffnen einer Tanzlexikon-Datei** (z. B. aus WhatsApp heraus mit dem Tanzlexikon):
+- Die Figur wird **nicht sofort hinzugefügt**. Zuerst erscheint eine **Vorschau**: Name, Texte, Medien und der Hinweis, **in welchen Tanz** sie einsortiert wird.
+- Vorgeschlagen wird der Tanz mit gleichem Namen (meine Wahl: ohne Beachtung von Groß-/Kleinschreibung). Gibt es ihn nicht, schlägt die Vorschau vor, den Tanz (und gegebenenfalls die Kategorie) **neu anzulegen**.
+- Der Empfänger kann die Zuordnung **vor dem Hinzufügen ändern**: einen anderen bestehenden Tanz wählen (Beispiel: Die Figur kommt aus „Salsa“, beim Empfänger heißt der Tanz „Casino“) oder einen neuen Tanz mit eigenem Namen anlegen.
+- Erst „Hinzufügen“ legt die Figur an. Der Import einer Figur **ergänzt** nur, er überschreibt nie etwas.
+- (Meine Wahl) Gibt es im Zieltanz schon eine Figur mit gleichem Namen, weist die Vorschau darauf hin. Die neue Figur wird zusätzlich angelegt, und man kann sie umbenennen.
+- (Meine Wahl) Medien aus der Datei werden in die Galerie des Empfängers gespeichert (wie beim großen Import).
 
 ## Sicherung
 
