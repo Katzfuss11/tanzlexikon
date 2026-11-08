@@ -67,6 +67,17 @@ class LexikonRepository(private val db: TanzDatabase) {
         orderedIds.forEachIndexed { i, id -> dao.setDancePosition(id, i) }
     }
 
+    /**
+     * Setzt die Reihenfolge von Kategorien und Tänzen in einem Rutsch (eine Transaktion).
+     * Steht ein Tanz unter einer anderen Kategorie als vorher, wechselt er dorthin.
+     */
+    suspend fun arrange(order: List<Pair<Long, List<Long>>>) = db.withTransaction {
+        order.forEachIndexed { catPos, (categoryId, danceIds) ->
+            dao.setCategoryPosition(categoryId, catPos)
+            danceIds.forEachIndexed { pos, danceId -> dao.moveDance(danceId, categoryId, pos) }
+        }
+    }
+
     /** Figuren im Papierkorb zählen nicht: sie verlieren dann ihren Tanz und merken sich nur den Namen. */
     suspend fun deleteDance(id: Long): DeleteResult = db.withTransaction {
         if (dao.activeFigureCount(id) > 0) {
