@@ -5,7 +5,7 @@ Voraussetzung: [1 · Rechner und Handy einrichten](01-einrichtung.md) ist erledi
 ## Weg A: mit Android Studio (zum Ausprobieren und Entwickeln)
 
 1. Starte Android Studio.
-2. Wähle **Open** und dann den Ordner `C:\Users\<Name>\repos\tanzlexikon`.
+2. Wähle **Open** und dann den Ordner, in den du das Repo geladen hast, z. B. `C:\Users\<Dein Name>\repos\tanzlexikon`.
    Die Frage „Trust Project?“ beantwortest du mit **Trust Project**.
 3. Warte, bis unten rechts der Fortschrittsbalken „Gradle sync“ verschwunden ist. Beim ersten Mal dauert das einige Minuten.
 4. Oben in der Werkzeugleiste steht ein Auswahlfeld mit Geräten. Wähle dort dein Handy (es erscheint mit seiner Modellnummer).

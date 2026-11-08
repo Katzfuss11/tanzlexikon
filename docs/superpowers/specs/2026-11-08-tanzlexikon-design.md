@@ -137,7 +137,7 @@ Beim Wiederherstellen über Auto-Backup oder auf einem neuen Gerät zeigen Verwe
 - Kotlin und Jetpack Compose (Material 3)
 - Lokale Datenbank: Room
 - Medien-Verweise über Android-Content-URIs (MediaStore), mit dauerhaften Leseberechtigungen bei ausgewählten Dateien
-- Gerät des Autors: **ein aktuelles Android-15-Handy**. Darauf wird getestet.
+- Testgerät des Autors: **ein aktuelles Android-15-Handy**. Darauf wird getestet.
 - (Meine Wahl) `targetSdk` 35 (Android 15), `minSdk` 26 (Android 8), damit andere die App später auch auf älteren Handys nutzen können. Die Foto-Auswahl läuft über den Android Photo Picker, der über Google Play bis in ältere Versionen zurückgereicht wird.
 - Einfache Struktur: ein App-Modul, keine unnötigen Schichten
 

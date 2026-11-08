@@ -481,7 +481,7 @@ check_unparsableTag_returnsFailed()
 - Modify: `app/build.gradle.kts` (nur falls in Task 1 etwas fehlt)
 
 - [ ] **Step 1: Anleitung `03-weitergeben-und-updates.md` schreiben:**
-  1. **Signaturschlüssel einmalig anlegen.** Mit `keytool` (aus dem `jbr`) wird `C:\Users\<Name>\tanzlexikon-schluessel\tanzlexikon.jks` erzeugt, Alias `tanzlexikon`, 10 000 Tage gültig. Danach `keystore.properties` im Repo-Root mit Pfad und Passwörtern anlegen (diese Datei steht in `.gitignore`).
+  1. **Signaturschlüssel einmalig anlegen.** Mit `keytool` (aus dem `jbr`) wird `C:\Users\<Name>\tanzlexikon-schluessel\tanzlexikon.jks` (außerhalb des Repos) erzeugt, Alias `tanzlexikon`, 10 000 Tage gültig. Danach `keystore.properties` im Repo-Root mit Pfad und Passwörtern anlegen (diese Datei steht in `.gitignore`).
   2. **Schlüssel sichern.** Die `.jks`-Datei und die Passwörter kommen an zwei Orte, z. B. einen USB-Stick und einen Passwortmanager. Ohne den Schlüssel lassen sich keine Updates über eine bestehende Installation installieren.
   3. **Release bauen:** `./gradlew assembleRelease` → `app/build/outputs/apk/release/app-release.apk`.
   4. **An andere weitergeben.** Die APK per Messenger oder Mail schicken. Der Empfänger tippt sie an, erlaubt „Unbekannte Apps installieren“ für die App, mit der er sie geöffnet hat, und installiert.
