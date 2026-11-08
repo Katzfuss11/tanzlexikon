@@ -180,6 +180,11 @@ class LexikonRepository(private val db: TanzDatabase) {
         }
     }
 
+    /** Hängt eine empfangene Figur ans Ende eines Tanzes. Überschreibt nie etwas. */
+    suspend fun importFigure(danceId: Long, f: ArchFigure, uriFor: (ArchMedia) -> String): Long = db.withTransaction {
+        insertArchFigure(danceId, f, dao.nextFigurePosition(danceId), uriFor)
+    }
+
     private suspend fun insertArchFigure(danceId: Long, f: ArchFigure, position: Int, uriFor: (ArchMedia) -> String): Long {
         val figureId = dao.insertFigure(
             FigureEntity(

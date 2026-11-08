@@ -134,6 +134,26 @@
     <string name="installed_version">Installierte Version: %1$s</string>
     <string name="open_trash_hint">Gelöschte Figuren der letzten 30 Tage</string>
 
+    <!-- Teilen und Empfang -->
+    <string name="share_as_message">Als Nachricht</string>
+    <string name="share_as_message_hint">Text, YouTube-Links und Videos direkt in WhatsApp, Signal &amp; Co.</string>
+    <string name="share_as_file">Als Tanzlexikon-Datei</string>
+    <string name="share_as_file_hint">Eine Datei, die andere mit dem Tanzlexikon öffnen und übernehmen können.</string>
+    <string name="packing">Figur wird verpackt …</string>
+    <string name="receive_title">Figur empfangen</string>
+    <string name="receive_target">Wird einsortiert in: %1$s › %2$s</string>
+    <string name="receive_target_new">Wird einsortiert in: %1$s › %2$s (neu)</string>
+    <string name="change">Ändern</string>
+    <string name="receive_duplicate">In diesem Tanz gibt es schon eine Figur mit diesem Namen. Du kannst sie trotzdem hinzufügen oder hier umbenennen.</string>
+    <string name="receive_media">Medien</string>
+    <string name="receive_media_missing">%1$s (fehlt in der Datei)</string>
+    <string name="add_figure">Hinzufügen</string>
+    <string name="choose_dance">Tanz wählen</string>
+    <string name="new_dance_ellipsis">Neuer Tanz …</string>
+    <string name="dance_name">Tanz</string>
+    <string name="error_not_a_figure">Das ist keine Tanzfigur-Datei.</string>
+    <string name="close">Schließen</string>
+
     <!-- Suche -->
     <string name="search_no_hits">Nichts gefunden</string>
     <string name="search_dance_hit">Tanz · %1$s</string>

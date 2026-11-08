@@ -2,6 +2,9 @@ package io.github.katzfuss11.tanzlexikon
 
 import android.app.Application
 import android.content.Context
+import android.net.Uri
+import io.github.katzfuss11.tanzlexikon.share.FigureShare
+import kotlinx.coroutines.flow.MutableStateFlow
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import coil3.video.VideoFrameDecoder
@@ -28,6 +31,10 @@ class TanzlexikonApp : Application(), SingletonImageLoader.Factory {
     val mediaChecker: MediaChecker by lazy { MediaChecker(contentResolver) }
     val galleryWriter: GalleryWriter by lazy { GalleryWriter(contentResolver) }
     val backupService: BackupService by lazy { BackupService(this, repository, galleryWriter, mediaChecker) }
+    val figureShare: FigureShare by lazy { FigureShare(this, mediaChecker) }
+
+    /** Eine geöffnete oder geteilte .tanzfigur-Datei, die noch auf den Empfang-Bildschirm wartet. */
+    val pendingImport = MutableStateFlow<Uri?>(null)
 
     override fun onCreate() {
         super.onCreate()

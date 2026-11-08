@@ -22,11 +22,14 @@ import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -41,6 +44,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalContext
+import io.github.katzfuss11.tanzlexikon.TanzlexikonApp
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -65,6 +73,67 @@ fun FigurScreen(
     val state by vm.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     var menu by remember { mutableStateOf(false) }
+
+    // Teilen: erst die Wahl "Als Nachricht" / "Als Datei", beim Packen ein Fortschritt.
+    val app = LocalContext.current.applicationContext as TanzlexikonApp
+    val scope = rememberCoroutineScope()
+    var sharing by remember { mutableStateOf(false) }
+    var packing by remember { mutableStateOf(false) }
+    var packProgress by remember { mutableStateOf(0f) }
+    if (sharing) {
+        AlertDialog(
+            onDismissRequest = { sharing = false },
+            title = { Text(stringResource(R.string.share)) },
+            text = {
+                Column {
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.share_as_message)) },
+                        supportingContent = { Text(stringResource(R.string.share_as_message_hint)) },
+                        modifier = Modifier.clickable {
+                            sharing = false
+                            state.detail?.let { d -> scope.launch { app.figureShare.shareAsMessage(d) } }
+                        },
+                    )
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.share_as_file)) },
+                        supportingContent = { Text(stringResource(R.string.share_as_file_hint)) },
+                        modifier = Modifier.clickable {
+                            sharing = false
+                            state.detail?.let { d ->
+                                packing = true
+                                packProgress = 0f
+                                scope.launch {
+                                    try {
+                                        app.figureShare.shareAsFile(d) { done, total ->
+                                            packProgress = if (total > 0) done.toFloat() / total else 0f
+                                        }
+                                    } catch (e: Exception) {
+                                        snackbar.showSnackbar(e.message ?: e.javaClass.simpleName)
+                                    } finally {
+                                        packing = false
+                                    }
+                                }
+                            }
+                        },
+                    )
+                }
+            },
+            confirmButton = {},
+            dismissButton = { TextButton(onClick = { sharing = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+    if (packing) {
+        AlertDialog(
+            onDismissRequest = {},
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.packing))
+                    LinearProgressIndicator(progress = { packProgress }, modifier = Modifier.fillMaxWidth())
+                }
+            },
+            confirmButton = {},
+        )
+    }
 
     val errorText = state.error?.let { stringResource(it) }
     LaunchedEffect(errorText) {
@@ -119,7 +188,7 @@ fun FigurScreen(
                         IconButton(onClick = vm::startEditing) {
                             Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
                         }
-                        IconButton(onClick = { /* Teilen kommt in einem späteren Schritt */ }, enabled = false) {
+                        IconButton(onClick = { sharing = true }, enabled = state.detail != null && !packing) {
                             Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share))
                         }
                         IconButton(onClick = { menu = true }) {

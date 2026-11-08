@@ -12,6 +12,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.katzfuss11.tanzlexikon.ui.empfang.EmpfangScreen
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -61,6 +67,14 @@ inline fun <reified VM : ViewModel> appViewModel(
 
 @Composable
 fun TanzlexikonNavHost(nav: NavHostController = rememberNavController()) {
+    val app = LocalContext.current.applicationContext as TanzlexikonApp
+    val pendingImport by app.pendingImport.collectAsStateWithLifecycle()
+    // Wurde eine .tanzfigur geöffnet, direkt zum Empfang springen.
+    LaunchedEffect(pendingImport) {
+        if (pendingImport != null && nav.currentDestination?.route != Routes.EMPFANG) {
+            nav.navigate(Routes.EMPFANG) { launchSingleTop = true }
+        }
+    }
     NavHost(navController = nav, startDestination = Routes.START) {
         composable(Routes.START) {
             StartScreen(
@@ -92,7 +106,26 @@ fun TanzlexikonNavHost(nav: NavHostController = rememberNavController()) {
         composable(Routes.EINSTELLUNGEN) {
             EinstellungenScreen(onBack = { nav.popBackStack() }, onTrash = { nav.navigate(Routes.PAPIERKORB) })
         }
-        composable(Routes.EMPFANG) { Placeholder(onBack = { nav.popBackStack() }) }
+        composable(Routes.EMPFANG) {
+            // Die Datei wird beim Betreten festgehalten, damit ein späteres Teilen sie nicht austauscht.
+            val uri = remember { app.pendingImport.value }
+            fun leave() {
+                app.pendingImport.value = null
+                if (!nav.popBackStack()) nav.navigate(Routes.START)
+            }
+            if (uri == null) {
+                LaunchedEffect(Unit) { leave() }
+            } else {
+                EmpfangScreen(
+                    uri = uri,
+                    onClose = ::leave,
+                    onAdded = { id ->
+                        app.pendingImport.value = null
+                        nav.navigate(Routes.figur(id)) { popUpTo(Routes.EMPFANG) { inclusive = true } }
+                    },
+                )
+            }
+        }
     }
 }
 
