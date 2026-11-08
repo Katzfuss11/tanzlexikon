@@ -10,7 +10,6 @@
     <string name="back">Zurück</string>
     <string name="more">Mehr</string>
     <string name="name">Name</string>
-    <string name="coming_soon">Kommt bald.</string>
 
     <!-- Startseite -->
     <string name="search_hint">Figur oder Tanz suchen</string>
@@ -133,6 +132,22 @@
     <string name="settings_about">Über</string>
     <string name="installed_version">Installierte Version: %1$s</string>
     <string name="open_trash_hint">Gelöschte Figuren der letzten 30 Tage</string>
+
+    <!-- Updates -->
+    <string name="check_updates">Nach Updates suchen</string>
+    <string name="update_checking">Suche nach Updates …</string>
+    <string name="update_available">Neue Version %1$s verfügbar</string>
+    <string name="update_available_text">Die neue Version wird heruntergeladen, danach öffnet sich das Android-Installationsfenster. Deine Figuren bleiben erhalten.</string>
+    <string name="update_download">Jetzt herunterladen</string>
+    <string name="later">Später</string>
+    <string name="update_downloading">Lade neue Version …</string>
+    <string name="update_permission_title">Einmalige Erlaubnis nötig</string>
+    <string name="update_permission_text">Damit das Tanzlexikon sich selbst aktualisieren darf, braucht es die Erlaubnis „Unbekannte Apps installieren“. Tippe auf „Einstellungen öffnen“, schalte den Schalter für Tanzlexikon ein und komm mit Zurück hierher. Dann auf „Weiter“ tippen.</string>
+    <string name="update_open_settings">Einstellungen öffnen</string>
+    <string name="update_retry">Weiter</string>
+    <string name="update_up_to_date">Du hast die neueste Version (%1$s).</string>
+    <string name="update_check_failed">Prüfung nicht möglich – keine Verbindung oder Repo nicht öffentlich.</string>
+    <string name="update_download_failed">Der Download hat nicht geklappt. Bitte später noch einmal versuchen.</string>
 
     <!-- Teilen und Empfang -->
     <string name="share_as_message">Als Nachricht</string>

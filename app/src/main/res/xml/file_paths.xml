@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Welche Dateien die App per FileProvider teilen darf: nur die frisch gepackten .tanzfigur-Dateien. -->
+<!-- Welche Dateien die App per FileProvider teilen darf: die frisch gepackten .tanzfigur-Dateien und heruntergeladene Updates. -->
 <paths>
     <cache-path name="share" path="share/" />
+    <cache-path name="updates" path="updates/" />
 </paths>

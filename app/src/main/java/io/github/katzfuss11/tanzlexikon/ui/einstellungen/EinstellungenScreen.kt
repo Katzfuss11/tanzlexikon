@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.katzfuss11.tanzlexikon.BuildConfig
 import io.github.katzfuss11.tanzlexikon.R
+import io.github.katzfuss11.tanzlexikon.TanzlexikonApp
 import io.github.katzfuss11.tanzlexikon.transfer.ArchiveError
 import io.github.katzfuss11.tanzlexikon.transfer.ImportOutcome
 import io.github.katzfuss11.tanzlexikon.ui.BackButton
@@ -110,6 +111,11 @@ fun EinstellungenScreen(
 
             SectionTitle(stringResource(R.string.settings_about))
             ListItem(headlineContent = { Text(stringResource(R.string.installed_version, BuildConfig.VERSION_NAME)) })
+            val app = LocalContext.current.applicationContext as TanzlexikonApp
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.check_updates)) },
+                modifier = Modifier.clickable { app.updateManager.manualCheck() },
+            )
         }
     }
 
