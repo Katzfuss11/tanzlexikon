@@ -46,9 +46,9 @@ Jeder Nutzer füllt die App mit **eigenen Inhalten**. Es gibt keine fertige Date
 
 - **Kategorien** und **Tänze** lassen sich anlegen, umbenennen, umsortieren und löschen. Beim ersten Start bringt die App eine Grundliste mit:
   - Standard: Langsamer Walzer, Tango, Wiener Walzer, Slowfox, Quickstep
-  - Latein: Cha-Cha-Cha, Samba, Rumba, Paso Doble, Jive
-  - Sonstige: Discofox, Salsa
-  - (Die genaue Liste unter „Sonstige“ ist meine Wahl und darf ergänzt werden.)
+  - Latein: Cha-Cha-Cha, Samba, Rumba, Paso Doble, Jive, Salsa
+  - Sonstige: Discofox, Argentinischer Tango
+  - (Entschieden vom Autor: Salsa gehört zu Latein, so wie es in Tanzschulen üblich ist. „Tango“ unter Standard ist der Standard-Tango, der Argentinische Tango steht separat. Alles ist nur ein Vorschlag, den der Nutzer ändern kann.)
 - Eine **Figur** gehört zu genau einem Tanz. (Meine Wahl: Ein „Hockeystick“ in Rumba und in Cha-Cha sind zwei getrennte Einträge, weil sich die Schritte unterscheiden.)
 - Eine Figur besteht aus:
   - **Name** (Pflicht)
