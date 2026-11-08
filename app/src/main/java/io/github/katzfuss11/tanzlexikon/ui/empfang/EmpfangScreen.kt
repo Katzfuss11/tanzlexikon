@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -78,7 +79,8 @@ fun EmpfangScreen(
             if (s.figure != null && s.error == null) {
                 Surface(tonalElevation = 3.dp) {
                     Row(
-                        Modifier.fillMaxWidth().padding(16.dp),
+                        // Die App zeichnet bis zum Rand; die Knöpfe gehören über die Android-Navigationsleiste.
+                        Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
                     ) {
                         OutlinedButton(onClick = onClose) { Text(stringResource(R.string.cancel)) }
