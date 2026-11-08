@@ -104,6 +104,36 @@
     <string name="delete_forever_question">„%1$s“ endgültig löschen? Das lässt sich nicht rückgängig machen. Videos und Bilder bleiben in der Galerie.</string>
     <string name="restored">Wiederhergestellt</string>
 
+    <!-- Einstellungen -->
+    <string name="settings_backup">Sicherung</string>
+    <string name="export_all">Alles exportieren</string>
+    <string name="export_all_hint">Speichert alle Kategorien, Tänze, Figuren, Videos und Bilder in einer ZIP-Datei, z. B. auf Google Drive.</string>
+    <string name="import_all">Importieren</string>
+    <string name="import_all_hint">Stellt den Stand aus einer ZIP-Sicherung wieder her.</string>
+    <string name="import_warning_title">Gesamten Datenbestand überschreiben?</string>
+    <string name="import_warning_text">Alle aktuellen Kategorien, Tänze und Figuren werden durch den Inhalt der Sicherung ersetzt. Vorher legt die App automatisch eine Sicherung des jetzigen Stands im Download-Ordner (Unterordner „Tanzlexikon“) an.</string>
+    <string name="overwrite">Überschreiben</string>
+    <string name="exporting">Exportiere …</string>
+    <string name="importing">Importiere …</string>
+    <string name="export_done">Export fertig.</string>
+    <plurals name="import_done">
+        <item quantity="one">Import fertig: %d Figur.</item>
+        <item quantity="other">Import fertig: %d Figuren.</item>
+    </plurals>
+    <plurals name="import_done_missing">
+        <item quantity="one">%d Video oder Bild fehlte schon in der Sicherung.</item>
+        <item quantity="other">%d Videos oder Bilder fehlten schon in der Sicherung.</item>
+    </plurals>
+    <string name="error_not_tanzlexikon">Das ist keine Tanzlexikon-Sicherung.</string>
+    <string name="error_newer_format">Diese Sicherung stammt aus einer neueren App-Version. Bitte zuerst die App aktualisieren.</string>
+    <string name="error_corrupt">Die Datei ist beschädigt oder unvollständig.</string>
+    <string name="error_wrong_kind">Das ist eine einzelne geteilte Figur, keine Sicherung. Öffne sie einfach mit dem Tanzlexikon, um sie hinzuzufügen.</string>
+    <string name="error_space">Nicht genug Speicherplatz. Benötigt werden etwa %1$s plus 50 MB Reserve.</string>
+    <string name="error_generic">Das hat nicht geklappt: %1$s</string>
+    <string name="settings_about">Über</string>
+    <string name="installed_version">Installierte Version: %1$s</string>
+    <string name="open_trash_hint">Gelöschte Figuren der letzten 30 Tage</string>
+
     <!-- Suche -->
     <string name="search_no_hits">Nichts gefunden</string>
     <string name="search_dance_hit">Tanz · %1$s</string>

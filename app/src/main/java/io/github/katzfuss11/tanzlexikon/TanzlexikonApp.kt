@@ -7,7 +7,9 @@ import coil3.SingletonImageLoader
 import coil3.video.VideoFrameDecoder
 import io.github.katzfuss11.tanzlexikon.data.TanzDatabase
 import io.github.katzfuss11.tanzlexikon.lexikon.LexikonRepository
+import io.github.katzfuss11.tanzlexikon.media.GalleryWriter
 import io.github.katzfuss11.tanzlexikon.media.MediaChecker
+import io.github.katzfuss11.tanzlexikon.transfer.BackupService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,6 +26,8 @@ class TanzlexikonApp : Application(), SingletonImageLoader.Factory {
     val database: TanzDatabase by lazy { TanzDatabase.build(this) }
     val repository: LexikonRepository by lazy { LexikonRepository(database) }
     val mediaChecker: MediaChecker by lazy { MediaChecker(contentResolver) }
+    val galleryWriter: GalleryWriter by lazy { GalleryWriter(contentResolver) }
+    val backupService: BackupService by lazy { BackupService(this, repository, galleryWriter, mediaChecker) }
 
     override fun onCreate() {
         super.onCreate()

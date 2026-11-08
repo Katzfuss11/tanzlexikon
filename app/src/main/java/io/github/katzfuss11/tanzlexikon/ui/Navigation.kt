@@ -28,6 +28,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import io.github.katzfuss11.tanzlexikon.R
 import io.github.katzfuss11.tanzlexikon.TanzlexikonApp
+import io.github.katzfuss11.tanzlexikon.ui.einstellungen.EinstellungenScreen
 import io.github.katzfuss11.tanzlexikon.ui.figur.FigurScreen
 import io.github.katzfuss11.tanzlexikon.ui.papierkorb.PapierkorbScreen
 import io.github.katzfuss11.tanzlexikon.ui.start.StartScreen
@@ -88,7 +89,9 @@ fun TanzlexikonNavHost(nav: NavHostController = rememberNavController()) {
             FigurScreen(figureId = entry.arguments!!.getLong("figureId"), onBack = { nav.popBackStack() })
         }
         composable(Routes.PAPIERKORB) { PapierkorbScreen(onBack = { nav.popBackStack() }) }
-        composable(Routes.EINSTELLUNGEN) { Placeholder(onBack = { nav.popBackStack() }) }
+        composable(Routes.EINSTELLUNGEN) {
+            EinstellungenScreen(onBack = { nav.popBackStack() }, onTrash = { nav.navigate(Routes.PAPIERKORB) })
+        }
         composable(Routes.EMPFANG) { Placeholder(onBack = { nav.popBackStack() }) }
     }
 }

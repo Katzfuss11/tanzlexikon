@@ -183,6 +183,15 @@ interface LexikonDao {
     @Query("DELETE FROM media WHERE figureId = :figureId")
     suspend fun deleteMediaOf(figureId: Long)
 
+    // ---- Für Export und Import ----
+    @Query("SELECT * FROM figure WHERE danceId = :danceId AND trashedAt IS NULL ORDER BY position, id")
+    suspend fun activeFiguresOf(danceId: Long): List<FigureEntity>
+
+    @Query("DELETE FROM media") suspend fun deleteAllMedia()
+    @Query("DELETE FROM figure") suspend fun deleteAllFigures()
+    @Query("DELETE FROM dance") suspend fun deleteAllDances()
+    @Query("DELETE FROM category") suspend fun deleteAllCategories()
+
     @Query(
         """
         SELECT m.*, f.name AS figureName, COALESCE(d.name, '') AS danceName

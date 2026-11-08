@@ -5,6 +5,12 @@ import io.github.katzfuss11.tanzlexikon.data.CategoryEntity
 import io.github.katzfuss11.tanzlexikon.data.DanceEntity
 import io.github.katzfuss11.tanzlexikon.data.FigureEntity
 import io.github.katzfuss11.tanzlexikon.data.MediaEntity
+import io.github.katzfuss11.tanzlexikon.data.MediaKind
+import io.github.katzfuss11.tanzlexikon.transfer.ArchCategory
+import io.github.katzfuss11.tanzlexikon.transfer.ArchDance
+import io.github.katzfuss11.tanzlexikon.transfer.ArchFigure
+import io.github.katzfuss11.tanzlexikon.transfer.ArchMedia
+import io.github.katzfuss11.tanzlexikon.transfer.ArchiveManifest
 import io.github.katzfuss11.tanzlexikon.data.TanzDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -129,6 +135,68 @@ class LexikonRepository(private val db: TanzDatabase) {
     /** Alle Medien von Figuren, die nicht im Papierkorb liegen. */
     suspend fun allActiveMedia(): List<Pair<MediaEntity, FigureSummaryRef>> =
         dao.activeMediaRows().map { it.media to FigureSummaryRef(it.media.figureId, it.figureName, it.danceName) }
+
+    // ---- Export und Import ----
+
+    /**
+     * Der ganze Bestand für eine Sicherung, ohne Papierkorb. Medien, deren Datei fehlt
+     * ([isAvailable] = false), kommen ohne Datei mit und bleiben so als „nicht gefunden“ erhalten.
+     */
+    suspend fun snapshot(isAvailable: (MediaEntity) -> Boolean): ArchiveSnapshot = db.withTransaction {
+        val files = mutableListOf<Pair<String, MediaEntity>>()
+        val categories = dao.allCategories().map { c ->
+            ArchCategory(c.name, c.position, dao.dancesOf(c.id).map { d ->
+                ArchDance(d.name, d.position, dao.activeFiguresOf(d.id).map { f ->
+                    ArchFigure(f.name, f.position, f.generalText, f.leaderText, f.followerText, dao.mediaOf(f.id).map { m ->
+                        val path = if (m.kind != MediaKind.YOUTUBE && isAvailable(m)) {
+                            "media/${files.size + 1}.${fileExtension(m)}".also { files += it to m }
+                        } else {
+                            null
+                        }
+                        ArchMedia(
+                            section = m.section, kind = m.kind, position = m.position,
+                            youtubeUrl = m.uri.takeIf { m.kind == MediaKind.YOUTUBE },
+                            file = path, displayName = m.displayName, mimeType = m.mimeType, sizeBytes = m.sizeBytes,
+                        )
+                    })
+                })
+            })
+        }
+        ArchiveSnapshot(categories, files)
+    }
+
+    /** Ersetzt den kompletten Bestand (auch den Papierkorb) in einer Transaktion. */
+    suspend fun replaceAll(manifest: ArchiveManifest, uriFor: (ArchMedia) -> String) = db.withTransaction {
+        dao.deleteAllMedia()
+        dao.deleteAllFigures()
+        dao.deleteAllDances()
+        dao.deleteAllCategories()
+        manifest.categories.forEach { c ->
+            val categoryId = dao.insertCategory(CategoryEntity(name = c.name, position = c.position))
+            c.dances.forEach { d ->
+                val danceId = dao.insertDance(DanceEntity(categoryId = categoryId, name = d.name, position = d.position))
+                d.figures.forEach { f -> insertArchFigure(danceId, f, f.position, uriFor) }
+            }
+        }
+    }
+
+    private suspend fun insertArchFigure(danceId: Long, f: ArchFigure, position: Int, uriFor: (ArchMedia) -> String): Long {
+        val figureId = dao.insertFigure(
+            FigureEntity(
+                danceId = danceId, name = f.name, position = position,
+                generalText = f.generalText, leaderText = f.leaderText, followerText = f.followerText,
+            ),
+        )
+        f.media.forEach { m ->
+            dao.insertMedia(
+                MediaEntity(
+                    figureId = figureId, section = m.section, kind = m.kind, uri = uriFor(m),
+                    displayName = m.displayName, mimeType = m.mimeType, sizeBytes = m.sizeBytes, position = m.position,
+                ),
+            )
+        }
+        return figureId
+    }
 
     // ---- Papierkorb ----
 
