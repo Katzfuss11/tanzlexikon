@@ -51,7 +51,11 @@ fun MediaViewer(media: MediaEntity, onClose: () -> Unit) {
                 AndroidView(
                     modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                     factory = { context ->
-                        val player = ExoPlayer.Builder(context).build().apply {
+                        val player = ExoPlayer.Builder(context)
+                            // Die Sprungknöpfe springen in beide Richtungen 5 Sekunden.
+                            .setSeekBackIncrementMs(5_000)
+                            .setSeekForwardIncrementMs(5_000)
+                            .build().apply {
                             setMediaItem(MediaItem.fromUri(uri))
                             prepare()
                             playWhenReady = true
