@@ -1,6 +1,6 @@
 # Tanzlexikon – Design
 
-Stand: 08.11.2026 · Status: Entwurf, noch nicht freigegeben
+Stand: 08.11.2026 · Status: vom Autor freigegeben
 
 ## Wozu die App da ist
 
@@ -21,7 +21,7 @@ Jeder Nutzer füllt die App mit **eigenen Inhalten**. Es gibt keine fertige Date
 
 ## Nicht-Ziele (vorerst)
 
-- Kein Lernkurs, keine fertigen Inhalte, kein Teilen mit anderen innerhalb der App.
+- Kein Lernkurs, keine fertigen Inhalte. Kein Teilen über einen Server: Geteilt werden einzelne Figuren nur als Nachricht oder Datei (siehe „Figuren teilen“).
 - Kein Server, kein Benutzerkonto, keine Anmeldung.
 - Kein Übungsstand („wie sicher“, „zuletzt geübt“). Das ist eine mögliche spätere Idee.
 - Keine Cloud-Synchronisation. Sie ist als **späteres To-do** vorgemerkt.
@@ -70,7 +70,7 @@ Grobentwürfe: https://claude.ai/artifact/WAZ7vnvjrCyrgLhxH4v22k (entschieden: *
 
 ## Medien hinzufügen
 
-- **Video aufnehmen** direkt aus der App: Die Kamera-App wird aufgerufen, und das Video wird **in der Galerie** gespeichert (z. B. im Album „Tanzlexikon“).
+- **Video aufnehmen** direkt aus der App: Die Kamera-App wird aufgerufen, und das Video wird **in der Galerie** gespeichert.
 - **Aus Galerie wählen:** Bilder und Videos.
 - **YouTube-Link einfügen:** Das Vorschaubild wird geladen, wenn Internet da ist. Ohne Internet erscheint ein Platzhalter.
 - Die App speichert nur einen **Verweis** auf die Datei in der Galerie und kopiert sie nicht. Wurde die Datei außerhalb der App gelöscht, zeigt die App einen Hinweis „Datei nicht mehr gefunden“ statt abzustürzen.
