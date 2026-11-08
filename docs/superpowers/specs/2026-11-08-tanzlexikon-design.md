@@ -98,6 +98,7 @@ Drei Ebenen ergänzen sich:
 2. **Texte und Struktur** (die Datenbank) sichert das **Android Auto-Backup** im Google-Konto. Die Datenbank ist klein, das Limit von 25 MB reicht.
 3. **Export/Import:** Ein Knopf erzeugt eine ZIP-Datei mit der Datenbank **und den Mediendateien**, die man irgendwo ablegt (Drive, Rechner). Der Import auf einem neuen Handy stellt alles wieder her, auch wenn die Galerie dort anders aussieht.
    - (Meine Wahl) Der Import **ersetzt** den aktuellen Stand, er führt nichts zusammen. Damit dabei nichts verloren geht, legt die App vorher automatisch einen Export des aktuellen Stands an.
+   - **Entschieden vom Autor:** Vor dem Import erscheint eine deutliche **Warnung**, dass der gesamte Datenbestand überschrieben wird. Der Import startet erst nach ausdrücklicher Bestätigung.
    - (Meine Wahl) Medien aus der ZIP kommen zurück **in die Galerie** (Ordner „Movies/Tanzlexikon“ bzw. „Pictures/Tanzlexikon“), und die Verweise zeigen auf diese neuen Einträge. Gibt es dort schon eine Datei mit gleichem Namen und gleicher Größe, wird sie verwendet statt dupliziert.
    - (Meine Wahl) Die ZIP kann mehrere GB groß werden. Export und Import laufen deshalb **gestreamt mit Fortschrittsanzeige**, und vorher prüft die App, ob genug Speicherplatz frei ist.
 
