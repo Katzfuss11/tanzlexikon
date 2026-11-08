@@ -28,7 +28,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import io.github.katzfuss11.tanzlexikon.R
 import io.github.katzfuss11.tanzlexikon.TanzlexikonApp
+import io.github.katzfuss11.tanzlexikon.ui.figur.FigurScreen
+import io.github.katzfuss11.tanzlexikon.ui.papierkorb.PapierkorbScreen
 import io.github.katzfuss11.tanzlexikon.ui.start.StartScreen
+import io.github.katzfuss11.tanzlexikon.ui.tanz.TanzScreen
 import io.github.katzfuss11.tanzlexikon.ui.suche.SucheScreen
 
 /** Die Adressen der Bildschirme. */
@@ -73,13 +76,17 @@ fun TanzlexikonNavHost(nav: NavHostController = rememberNavController()) {
                 onOpenDance = { nav.navigate(Routes.tanz(it)) },
             )
         }
-        composable(Routes.TANZ, arguments = listOf(navArgument("danceId") { type = NavType.LongType })) {
-            Placeholder(onBack = { nav.popBackStack() })
+        composable(Routes.TANZ, arguments = listOf(navArgument("danceId") { type = NavType.LongType })) { entry ->
+            TanzScreen(
+                danceId = entry.arguments!!.getLong("danceId"),
+                onBack = { nav.popBackStack() },
+                onOpenFigure = { nav.navigate(Routes.figur(it)) },
+            )
         }
-        composable(Routes.FIGUR, arguments = listOf(navArgument("figureId") { type = NavType.LongType })) {
-            Placeholder(onBack = { nav.popBackStack() })
+        composable(Routes.FIGUR, arguments = listOf(navArgument("figureId") { type = NavType.LongType })) { entry ->
+            FigurScreen(figureId = entry.arguments!!.getLong("figureId"), onBack = { nav.popBackStack() })
         }
-        composable(Routes.PAPIERKORB) { Placeholder(onBack = { nav.popBackStack() }) }
+        composable(Routes.PAPIERKORB) { PapierkorbScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.EINSTELLUNGEN) { Placeholder(onBack = { nav.popBackStack() }) }
         composable(Routes.EMPFANG) { Placeholder(onBack = { nav.popBackStack() }) }
     }

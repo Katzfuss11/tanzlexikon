@@ -41,6 +41,49 @@
     <string name="dance_deleted">Tanz gelöscht</string>
     <string name="category_deleted">Kategorie gelöscht</string>
 
+    <!-- Tanz -->
+    <string name="new_figure">Neue Figur</string>
+    <string name="no_figures_yet">Noch keine Figuren. Tippe auf +, um die erste anzulegen.</string>
+    <string name="to_trash">In den Papierkorb</string>
+    <string name="moved_to_trash">In den Papierkorb verschoben</string>
+    <string name="undo">Rückgängig</string>
+    <string name="media_text_only">nur Text</string>
+    <plurals name="media_videos">
+        <item quantity="one">%d Video</item>
+        <item quantity="other">%d Videos</item>
+    </plurals>
+    <plurals name="media_images">
+        <item quantity="one">%d Bild</item>
+        <item quantity="other">%d Bilder</item>
+    </plurals>
+    <plurals name="media_links">
+        <item quantity="one">%d Link</item>
+        <item quantity="other">%d Links</item>
+    </plurals>
+
+    <!-- Figur -->
+    <string name="edit">Bearbeiten</string>
+    <string name="share">Teilen</string>
+    <string name="section_general">Allgemein</string>
+    <string name="section_leader">Leader</string>
+    <string name="section_follower">Follower</string>
+    <string name="name_required">Bitte gib der Figur einen Namen.</string>
+    <string name="figure_empty">Noch nichts eingetragen. Tippe auf den Stift, um Beschreibungen zu ergänzen.</string>
+    <string name="text_hint">Beschreibung</string>
+
+    <!-- Papierkorb -->
+    <string name="trash_empty">Der Papierkorb ist leer.</string>
+    <string name="trash_hint">Gelöschte Figuren bleiben 30 Tage hier. Videos und Bilder in der Galerie werden nie gelöscht.</string>
+    <string name="trashed_on">gelöscht am %1$s</string>
+    <plurals name="days_left">
+        <item quantity="one">noch %d Tag</item>
+        <item quantity="other">noch %d Tage</item>
+    </plurals>
+    <string name="restore">Wiederherstellen</string>
+    <string name="delete_forever">Endgültig löschen</string>
+    <string name="delete_forever_question">„%1$s“ endgültig löschen? Das lässt sich nicht rückgängig machen. Videos und Bilder bleiben in der Galerie.</string>
+    <string name="restored">Wiederhergestellt</string>
+
     <!-- Suche -->
     <string name="search_no_hits">Nichts gefunden</string>
     <string name="search_dance_hit">Tanz · %1$s</string>
