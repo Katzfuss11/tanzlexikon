@@ -30,6 +30,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,6 +91,8 @@ private fun MediaTile(
         value = withContext(Dispatchers.IO) { MediaChecker(context.contentResolver).isAvailable(m) }
     }
     val shape = MaterialTheme.shapes.small
+    var viewing by remember { mutableStateOf(false) }
+    if (viewing) MediaViewer(m, onClose = { viewing = false })
     Column {
         Box(
             Modifier
@@ -95,7 +100,10 @@ private fun MediaTile(
                 .aspectRatio(16f / 10f)
                 .clip(shape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .clickable(enabled = available == true) { open(context, m) },
+                .clickable(enabled = available == true) {
+                    // Eigene Videos und Bilder zeigt die App selbst; nur YouTube geht nach außen.
+                    if (m.kind == MediaKind.YOUTUBE) openYouTube(context, m) else viewing = true
+                },
         ) {
             if (available == false) {
                 Column(
@@ -182,17 +190,10 @@ private fun Placeholder(kind: MediaKind) {
     }
 }
 
-/** Öffnet das Medium in der passenden App (Videoplayer, Galerie oder YouTube). */
-private fun open(context: Context, m: MediaEntity) {
-    val intent = when (m.kind) {
-        MediaKind.YOUTUBE -> Intent(Intent.ACTION_VIEW, Uri.parse(m.uri))
-        else -> Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(Uri.parse(m.uri), m.mimeType ?: if (m.kind == MediaKind.IMAGE) "image/*" else "video/*")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-    }
+/** Öffnet einen YouTube-Link in der YouTube-App oder im Browser. */
+private fun openYouTube(context: Context, m: MediaEntity) {
     try {
-        context.startActivity(intent)
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(m.uri)))
     } catch (_: ActivityNotFoundException) {
         Toast.makeText(context, R.string.no_app_to_open, Toast.LENGTH_LONG).show()
     }
