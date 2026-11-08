@@ -105,6 +105,17 @@ Der Grundsatz lautet: Nichts verschwindet durch einen einzigen Fehltipp.
 - (Meine Wahl) Gibt es im Zieltanz schon eine Figur mit gleichem Namen, weist die Vorschau darauf hin. Die neue Figur wird zusätzlich angelegt, und man kann sie umbenennen.
 - (Meine Wahl) Medien aus der Datei werden in die Galerie des Empfängers gespeichert (wie beim großen Import).
 
+## Updates
+
+**Entschieden vom Autor, Teil der ersten Version:**
+- Neue Versionen werden als **GitHub-Release** im Repo `Katzfuss11/tanzlexikon` veröffentlicht (Versionsnummer als Tag, APK als Anhang).
+- **Beim App-Start** fragt die App GitHub nach dem neuesten Release. Ist es neuer als die installierte Version, erscheint gleich zu Beginn ein Hinweis: „Neue Version X verfügbar – jetzt herunterladen“. (Meine Wahl: Man kann den Hinweis mit „Später“ wegtippen, dann erscheint er beim nächsten Start wieder.)
+- In den **Einstellungen** gibt es jederzeit den Knopf „Nach Updates suchen“, beliebig oft. Dort steht auch die installierte Versionsnummer.
+- „Herunterladen“ lädt die APK und öffnet das Android-Installationsfenster. Der Nutzer bestätigt einmal, die Daten bleiben erhalten. Ganz ohne Bestätigung ist bei selbst installierten Apps nicht möglich.
+- Ohne Internet oder bei einem Fehler verhält sich die App beim Start still. Nur die manuelle Suche meldet „Prüfung nicht möglich“.
+- **Voraussetzung:** Das Repo muss **öffentlich** sein. Solange es privat ist, schlägt die Prüfung fehl und die App verhält sich wie ohne Internet. Updates gehen dann nur über eine verschickte APK.
+- Die Einstellungen sind ein eigener Bildschirm, den man über das Menü auf der Startseite erreicht. Dort liegen auch Export/Import und der Papierkorb.
+
 ## Sicherung
 
 Drei Ebenen ergänzen sich:
