@@ -140,6 +140,12 @@
     <string name="share_as_file">Als Tanzlexikon-Datei</string>
     <string name="share_as_file_hint">Eine Datei, die andere mit dem Tanzlexikon öffnen und übernehmen können.</string>
     <string name="packing">Figur wird verpackt …</string>
+    <string name="shrinking">Videos werden verkleinert …</string>
+    <string name="video_quality">Videoqualität</string>
+    <string name="quality_small">Verkleinert (empfohlen)</string>
+    <string name="quality_small_hint">Große Videos werden auf 720p umgerechnet. Schneller zu senden, z. B. per WhatsApp. Deine Originale bleiben unverändert.</string>
+    <string name="quality_original">Originalqualität</string>
+    <string name="quality_original_hint">Volle Qualität, die Videos sind zusammen %1$s groß.</string>
     <string name="receive_title">Figur empfangen</string>
     <string name="receive_target">Wird einsortiert in: %1$s › %2$s</string>
     <string name="receive_target_new">Wird einsortiert in: %1$s › %2$s (neu)</string>

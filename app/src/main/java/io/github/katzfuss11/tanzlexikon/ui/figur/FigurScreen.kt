@@ -59,6 +59,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.katzfuss11.tanzlexikon.R
 import io.github.katzfuss11.tanzlexikon.data.MediaEntity
+import io.github.katzfuss11.tanzlexikon.data.MediaKind
+import io.github.katzfuss11.tanzlexikon.share.PackStage
+import android.text.format.Formatter
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import io.github.katzfuss11.tanzlexikon.data.Section
 import io.github.katzfuss11.tanzlexikon.ui.BackButton
 import io.github.katzfuss11.tanzlexikon.ui.appViewModel
@@ -80,6 +85,56 @@ fun FigurScreen(
     var sharing by remember { mutableStateOf(false) }
     var packing by remember { mutableStateOf(false) }
     var packProgress by remember { mutableStateOf(0f) }
+    var packStage by remember { mutableStateOf(PackStage.PACKING) }
+    var packJob by remember { mutableStateOf<Job?>(null) }
+    var askQuality by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    fun packAndShare(shrink: Boolean) {
+        val d = state.detail ?: return
+        packing = true
+        packProgress = 0f
+        packStage = if (shrink) PackStage.SHRINKING else PackStage.PACKING
+        packJob = scope.launch {
+            try {
+                app.figureShare.shareAsFile(d, shrink) { stage, p ->
+                    packStage = stage
+                    packProgress = p
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                snackbar.showSnackbar(e.message ?: e.javaClass.simpleName)
+            } finally {
+                packing = false
+                packJob = null
+            }
+        }
+    }
+    if (askQuality) {
+        val videoBytes = state.detail?.media.orEmpty().filter { it.kind == MediaKind.VIDEO }.sumOf { it.sizeBytes ?: 0L }
+        AlertDialog(
+            onDismissRequest = { askQuality = false },
+            title = { Text(stringResource(R.string.video_quality)) },
+            text = {
+                Column {
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.quality_small)) },
+                        supportingContent = { Text(stringResource(R.string.quality_small_hint)) },
+                        modifier = Modifier.clickable { askQuality = false; packAndShare(shrink = true) },
+                    )
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.quality_original)) },
+                        supportingContent = {
+                            Text(stringResource(R.string.quality_original_hint, Formatter.formatShortFileSize(context, videoBytes)))
+                        },
+                        modifier = Modifier.clickable { askQuality = false; packAndShare(shrink = false) },
+                    )
+                }
+            },
+            confirmButton = {},
+            dismissButton = { TextButton(onClick = { askQuality = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
     if (sharing) {
         AlertDialog(
             onDismissRequest = { sharing = false },
@@ -99,21 +154,9 @@ fun FigurScreen(
                         supportingContent = { Text(stringResource(R.string.share_as_file_hint)) },
                         modifier = Modifier.clickable {
                             sharing = false
-                            state.detail?.let { d ->
-                                packing = true
-                                packProgress = 0f
-                                scope.launch {
-                                    try {
-                                        app.figureShare.shareAsFile(d) { done, total ->
-                                            packProgress = if (total > 0) done.toFloat() / total else 0f
-                                        }
-                                    } catch (e: Exception) {
-                                        snackbar.showSnackbar(e.message ?: e.javaClass.simpleName)
-                                    } finally {
-                                        packing = false
-                                    }
-                                }
-                            }
+                            // Nur bei Videos lohnt die Frage nach der Qualität.
+                            if (state.detail?.media.orEmpty().any { it.kind == MediaKind.VIDEO }) askQuality = true
+                            else packAndShare(shrink = false)
                         },
                     )
                 }
@@ -127,11 +170,12 @@ fun FigurScreen(
             onDismissRequest = {},
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(stringResource(R.string.packing))
+                    Text(stringResource(if (packStage == PackStage.SHRINKING) R.string.shrinking else R.string.packing))
                     LinearProgressIndicator(progress = { packProgress }, modifier = Modifier.fillMaxWidth())
                 }
             },
             confirmButton = {},
+            dismissButton = { TextButton(onClick = { packJob?.cancel() }) { Text(stringResource(R.string.cancel)) } },
         )
     }
 
