@@ -2,7 +2,6 @@ package io.github.katzfuss11.tanzlexikon.ui.tanz
 
 import android.content.res.Resources
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +13,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -30,11 +28,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,7 +38,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
@@ -154,22 +148,8 @@ private fun FigureList(
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
         items(items, key = { it.id }) { figure ->
             ReorderableItem(reorderState, key = figure.id) { isDragging ->
-                val swipe = rememberSwipeToDismissBoxState()
                 var menu by remember { mutableStateOf(false) }
-                SwipeToDismissBox(
-                    state = swipe,
-                    enableDismissFromStartToEnd = false,
-                    onDismiss = { onTrash(figure.id) },
-                    backgroundContent = {
-                        Box(
-                            Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = 24.dp),
-                            contentAlignment = Alignment.CenterEnd,
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.to_trash))
-                        }
-                    },
-                ) {
-                    Surface(tonalElevation = if (isDragging) 6.dp else 0.dp) {
+                Surface(tonalElevation = if (isDragging) 6.dp else 0.dp) {
                         Box {
                             ListItem(
                                 headlineContent = { Text(figure.name) },
@@ -199,7 +179,6 @@ private fun FigureList(
                                 })
                             }
                         }
-                    }
                 }
                 HorizontalDivider(Modifier.padding(start = 16.dp))
             }
