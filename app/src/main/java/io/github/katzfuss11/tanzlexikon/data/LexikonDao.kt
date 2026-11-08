@@ -24,6 +24,13 @@ data class FigureRow(
     val categoryName: String?,
 )
 
+/** Ein Medium mit Figur- und Tanznamen. */
+data class MediaRow(
+    @Embedded val media: MediaEntity,
+    val figureName: String,
+    val danceName: String,
+)
+
 @Dao
 interface LexikonDao {
     // ---- Kategorien ----
@@ -175,4 +182,13 @@ interface LexikonDao {
 
     @Query("DELETE FROM media WHERE figureId = :figureId")
     suspend fun deleteMediaOf(figureId: Long)
+
+    @Query(
+        """
+        SELECT m.*, f.name AS figureName, COALESCE(d.name, '') AS danceName
+        FROM media m JOIN figure f ON f.id = m.figureId LEFT JOIN dance d ON d.id = f.danceId
+        WHERE f.trashedAt IS NULL ORDER BY d.name, f.name, m.position
+        """,
+    )
+    suspend fun activeMediaRows(): List<MediaRow>
 }

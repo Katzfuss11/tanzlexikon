@@ -67,6 +67,7 @@ fun TanzlexikonNavHost(nav: NavHostController = rememberNavController()) {
                 onSearch = { nav.navigate(Routes.SUCHE) },
                 onTrash = { nav.navigate(Routes.PAPIERKORB) },
                 onSettings = { nav.navigate(Routes.EINSTELLUNGEN) },
+                onOpenFigure = { nav.navigate(Routes.figur(it)) },
             )
         }
         composable(Routes.SUCHE) {

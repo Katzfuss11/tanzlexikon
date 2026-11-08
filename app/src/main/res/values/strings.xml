@@ -71,6 +71,26 @@
     <string name="figure_empty">Noch nichts eingetragen. Tippe auf den Stift, um Beschreibungen zu ergänzen.</string>
     <string name="text_hint">Beschreibung</string>
 
+    <!-- Medien -->
+    <string name="add_media">Medium hinzufügen</string>
+    <string name="record_video">Video aufnehmen</string>
+    <string name="from_gallery">Aus der Galerie</string>
+    <string name="youtube_link">YouTube-Link</string>
+    <string name="youtube_hint">Link einfügen, z. B. https://youtu.be/…</string>
+    <string name="not_a_youtube_link">Das ist kein YouTube-Link.</string>
+    <string name="media_missing">Datei nicht mehr gefunden</string>
+    <string name="relink">Neu verknüpfen</string>
+    <string name="remove_media">Medium entfernen</string>
+    <string name="play">Abspielen</string>
+    <string name="no_app_to_open">Keine App zum Öffnen gefunden.</string>
+    <string name="no_camera">Keine Kamera-App gefunden.</string>
+    <plurals name="missing_media_hint">
+        <item quantity="one">%d Video oder Bild nicht mehr gefunden</item>
+        <item quantity="other">%d Videos oder Bilder nicht mehr gefunden</item>
+    </plurals>
+    <string name="missing_media_title">Fehlende Medien</string>
+    <string name="missing_media_text">Diese Figuren verweisen auf Dateien, die nicht mehr in der Galerie liegen. Öffne eine Figur, tippe auf den Stift und dann bei der Kachel auf „Neu verknüpfen“.</string>
+
     <!-- Papierkorb -->
     <string name="trash_empty">Der Papierkorb ist leer.</string>
     <string name="trash_hint">Gelöschte Figuren bleiben 30 Tage hier. Videos und Bilder in der Galerie werden nie gelöscht.</string>

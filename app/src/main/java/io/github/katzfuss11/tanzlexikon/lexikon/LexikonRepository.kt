@@ -126,6 +126,10 @@ class LexikonRepository(private val db: TanzDatabase) {
         media.forEach { dao.insertMedia(it.copy(id = 0, figureId = id)) }
     }
 
+    /** Alle Medien von Figuren, die nicht im Papierkorb liegen. */
+    suspend fun allActiveMedia(): List<Pair<MediaEntity, FigureSummaryRef>> =
+        dao.activeMediaRows().map { it.media to FigureSummaryRef(it.media.figureId, it.figureName, it.danceName) }
+
     // ---- Papierkorb ----
 
     suspend fun trashFigure(id: Long, now: Long) = db.withTransaction {

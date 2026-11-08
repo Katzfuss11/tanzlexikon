@@ -98,4 +98,25 @@ class FigurViewModelTest {
         assertEquals(listOf("Grundidee", "Führen", "Folgen"), listOf(f.generalText, f.leaderText, f.followerText))
         assertEquals(listOf("https://youtu.be/x"), await { vm.state.first { it.detail!!.media.isNotEmpty() } }.detail!!.media.map { it.uri })
     }
+
+    @Test fun mediaDraft_addRemoveRelink_onlyChangesDraftUntilSave() {
+        vm.startEditing()
+        vm.addMedia(Section.GENERAL, listOf(NewMedia(MediaKind.VIDEO, "content://alt", "alt.mp4", "video/mp4", 10)))
+        vm.addMedia(Section.LEADER, listOf(NewMedia(MediaKind.YOUTUBE, "https://youtu.be/dQw4w9WgXcQ")))
+        val old = vm.state.value.draft!!.media.first { it.uri == "content://alt" }
+
+        vm.relinkMedia(old, NewMedia(MediaKind.VIDEO, "content://neu", "neu.mp4", "video/mp4", 20))
+        val link = vm.state.value.draft!!.media.first { it.kind == MediaKind.YOUTUBE }
+        vm.removeMedia(link)
+
+        val draftMedia = vm.state.value.draft!!.media
+        assertEquals(listOf("content://neu"), draftMedia.map { it.uri })
+        assertEquals("neu.mp4", draftMedia.single().displayName)
+        assertEquals(Section.GENERAL, draftMedia.single().section)
+        assertTrue(await { repo.observeFigure(figureId).first() }!!.media.isEmpty())
+
+        vm.save()
+        val saved = await { vm.state.first { !it.editing && it.detail!!.media.isNotEmpty() } }.detail!!.media
+        assertEquals(listOf(20L), saved.map { it.sizeBytes })
+    }
 }

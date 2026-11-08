@@ -2,6 +2,8 @@ package io.github.katzfuss11.tanzlexikon.ui.figur
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
@@ -35,6 +41,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.katzfuss11.tanzlexikon.R
+import io.github.katzfuss11.tanzlexikon.data.MediaEntity
 import io.github.katzfuss11.tanzlexikon.data.Section
 import io.github.katzfuss11.tanzlexikon.ui.BackButton
 import io.github.katzfuss11.tanzlexikon.ui.appViewModel
@@ -67,6 +75,29 @@ fun FigurScreen(
     }
     // Beim Bearbeiten wirkt die Zurück-Taste wie "Abbrechen".
     BackHandler(enabled = state.editing) { vm.cancelEditing() }
+
+    // Wohin das nächste ausgewählte Medium gehört: in einen Bereich oder als Ersatz für ein fehlendes.
+    var addTarget by rememberSaveable { mutableStateOf<Section?>(null) }
+    var relinkTarget by remember { mutableStateOf<MediaEntity?>(null) }
+    var youtubeFor by rememberSaveable { mutableStateOf<Section?>(null) }
+    val adder = rememberMediaAdder { picked ->
+        val relink = relinkTarget
+        if (relink != null) {
+            picked.firstOrNull()?.let { vm.relinkMedia(relink, it) }
+            relinkTarget = null
+        } else {
+            addTarget?.let { vm.addMedia(it, picked) }
+        }
+    }
+    youtubeFor?.let { section ->
+        YouTubeDialog(
+            onDismiss = { youtubeFor = null },
+            onConfirm = {
+                vm.addMedia(section, listOf(it))
+                youtubeFor = null
+            },
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -136,6 +167,20 @@ fun FigurScreen(
                             minLines = 3,
                             modifier = Modifier.fillMaxWidth(),
                         )
+                        MediaSection(
+                            media = draft.media.filter { it.section == section },
+                            editing = true,
+                            onRemove = vm::removeMedia,
+                            onRelink = {
+                                relinkTarget = it
+                                adder.pickOne()
+                            },
+                        )
+                        AddMediaButton(
+                            onRecord = { addTarget = section; adder.recordVideo() },
+                            onGallery = { addTarget = section; adder.pickFromGallery() },
+                            onYouTube = { youtubeFor = section },
+                        )
                     }
                 }
             } else if (detail != null) {
@@ -149,10 +194,40 @@ fun FigurScreen(
                 visible.forEach { section ->
                     SectionCard(section) {
                         if (texts[section]!!.isNotBlank()) Text(texts[section]!!, style = MaterialTheme.typography.bodyLarge)
+                        MediaSection(media = detail.media.filter { it.section == section }, editing = false)
                     }
                 }
             }
             Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun AddMediaButton(onRecord: () -> Unit, onGallery: () -> Unit, onYouTube: () -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        TextButton(onClick = { open = true }) {
+            Icon(Icons.Default.Add, contentDescription = null)
+            Spacer(Modifier.width(6.dp))
+            Text(stringResource(R.string.add_media))
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.record_video)) },
+                leadingIcon = { Icon(Icons.Default.Videocam, contentDescription = null) },
+                onClick = { open = false; onRecord() },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.from_gallery)) },
+                leadingIcon = { Icon(Icons.Default.PhotoLibrary, contentDescription = null) },
+                onClick = { open = false; onGallery() },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.youtube_link)) },
+                leadingIcon = { Icon(Icons.Default.Link, contentDescription = null) },
+                onClick = { open = false; onYouTube() },
+            )
         }
     }
 }

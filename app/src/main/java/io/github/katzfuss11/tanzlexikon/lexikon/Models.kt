@@ -31,3 +31,6 @@ data class TrashedFigure(val id: Long, val name: String, val danceName: String, 
 data class SearchHit(val figureId: Long?, val danceId: Long, val title: String, val subtitle: String)
 
 enum class DeleteResult { DELETED, NOT_EMPTY }
+
+/** Verweis auf eine Figur, z. B. für die Liste der Figuren mit fehlenden Medien. */
+data class FigureSummaryRef(val figureId: Long, val figureName: String, val danceName: String)

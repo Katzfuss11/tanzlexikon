@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -58,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.katzfuss11.tanzlexikon.R
 import io.github.katzfuss11.tanzlexikon.lexikon.CategoryWithDances
@@ -84,9 +86,16 @@ fun StartScreen(
     onSearch: () -> Unit,
     onTrash: () -> Unit,
     onSettings: () -> Unit,
-    vm: StartViewModel = appViewModel { StartViewModel(it.repository) },
+    onOpenFigure: (Long) -> Unit,
+    vm: StartViewModel = appViewModel { StartViewModel(it.repository, it.mediaChecker::isAvailable) },
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
+    var showMissing by remember { mutableStateOf(false) }
+    // Bei jeder Rückkehr auf die Startseite neu prüfen, ob Videos oder Bilder fehlen.
+    LifecycleResumeEffect(Unit) {
+        vm.refreshMissingMedia()
+        onPauseOrDispose {}
+    }
     val snackbar = remember { SnackbarHostState() }
     var dialog by remember { mutableStateOf<StartDialog?>(null) }
     var ordering by rememberSaveable { mutableStateOf(false) }
@@ -154,6 +163,8 @@ fun StartScreen(
             } else {
                 StartList(
                     categories = state.categories,
+                    missingMediaCount = state.missingMediaCount,
+                    onShowMissing = { showMissing = true },
                     onSearch = onSearch,
                     onOpenDance = onOpenDance,
                     onRenameDance = { dialog = StartDialog.RenameDance(it) },
@@ -164,6 +175,29 @@ fun StartScreen(
                 )
             }
         }
+    }
+
+    if (showMissing) {
+        AlertDialog(
+            onDismissRequest = { showMissing = false },
+            title = { Text(stringResource(R.string.missing_media_title)) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.missing_media_text), style = MaterialTheme.typography.bodyMedium)
+                    state.missingFigures.forEach { f ->
+                        ListItem(
+                            headlineContent = { Text(f.figureName) },
+                            supportingContent = { Text(f.danceName) },
+                            modifier = Modifier.clickable {
+                                showMissing = false
+                                onOpenFigure(f.figureId)
+                            },
+                        )
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showMissing = false }) { Text(stringResource(R.string.ok)) } },
+        )
     }
 
     when (val d = dialog) {
@@ -272,6 +306,8 @@ private fun CategoryChooser(categories: List<CategoryWithDances>, selected: Long
 @Composable
 private fun StartList(
     categories: List<CategoryWithDances>,
+    missingMediaCount: Int,
+    onShowMissing: () -> Unit,
     onSearch: () -> Unit,
     onOpenDance: (Long) -> Unit,
     onRenameDance: (DanceSummary) -> Unit,
@@ -282,6 +318,25 @@ private fun StartList(
 ) {
     LazyColumn(Modifier.fillMaxSize()) {
         item(key = "search") { SearchField(onSearch) }
+        if (missingMediaCount > 0) {
+            item(key = "missing") {
+                Surface(
+                    onClick = onShowMissing,
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                ) {
+                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            pluralStringResource(R.plurals.missing_media_hint, missingMediaCount, missingMediaCount),
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    }
+                }
+            }
+        }
         categories.forEach { category ->
             item(key = "c${category.id}") {
                 var menu by remember { mutableStateOf(false) }
