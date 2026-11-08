@@ -1,9 +1,9 @@
 package io.github.katzfuss11.tanzlexikon.ui.figur
 
 import android.net.Uri
-import android.widget.FrameLayout
-import android.widget.MediaController
-import android.widget.VideoView
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,24 +51,25 @@ fun MediaViewer(media: MediaEntity, onClose: () -> Unit) {
                 AndroidView(
                     modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                     factory = { context ->
-                        val video = VideoView(context)
-                        FrameLayout(context).apply {
-                            addView(
-                                video,
-                                FrameLayout.LayoutParams(
-                                    FrameLayout.LayoutParams.MATCH_PARENT,
-                                    FrameLayout.LayoutParams.WRAP_CONTENT,
-                                    android.view.Gravity.CENTER,
-                                ),
-                            )
-                            val controller = MediaController(context)
-                            controller.setAnchorView(this)
-                            video.setMediaController(controller)
-                            video.setVideoURI(uri)
-                            video.setOnPreparedListener { video.start(); controller.show(3000) }
+                        val player = ExoPlayer.Builder(context).build().apply {
+                            setMediaItem(MediaItem.fromUri(uri))
+                            prepare()
+                            playWhenReady = true
+                        }
+                        PlayerView(context).apply {
+                            this.player = player
+                            // Beim Ziehen am Zeitregler läuft das Bild flüssig mit, damit man
+                            // eine Stelle in der Figur genau ansteuern kann.
+                            setTimeBarScrubbingEnabled(true)
+                            setShowNextButton(false)
+                            setShowPreviousButton(false)
+                            controllerShowTimeoutMs = 4000
                         }
                     },
-                    onRelease = { frame -> (frame.getChildAt(0) as? VideoView)?.stopPlayback() },
+                    onRelease = { view ->
+                        view.player?.release()
+                        view.player = null
+                    },
                 )
             }
             IconButton(

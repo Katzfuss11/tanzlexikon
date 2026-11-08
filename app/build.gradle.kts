@@ -81,6 +81,8 @@ dependencies {
     implementation(libs.coil.video)
     implementation(libs.coil.network)
     implementation(libs.reorderable)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
