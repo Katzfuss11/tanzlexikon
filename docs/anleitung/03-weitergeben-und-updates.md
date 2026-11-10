@@ -145,7 +145,9 @@ Ab jetzt installierst du auf diesem Handy nur noch die richtige Version. Der gr�
 2. Wo: **Handy der anderen Person**:
    1. Die Datei antippen.
    2. Android fragt, ob die App, mit der die Datei geöffnet wurde (z. B. WhatsApp oder „Dateien“), **„Unbekannte Apps installieren“** darf. Den Schalter einschalten, zurückgehen und **Installieren** tippen.
-   3. Warnt Google Play Protect vor einer unbekannten App, tippe auf **Trotzdem installieren**.
+   3. **Google Play Protect** meldet sich eventuell, beim ersten Installieren und auch bei Updates:
+      - Es fragt, ob es die App **scannen** darf. Das kannst du zulassen.
+      - Danach heißt es womöglich, die App **„kann schädlich sein“**. Das sagt Play Protect bei fast jeder App, die nicht aus dem Play Store kommt und von einem unbekannten Entwickler stammt. Es bedeutet nicht, dass etwas Schädliches gefunden wurde. Tippe auf **Trotzdem installieren**.
 
 ### Hinweis: Googles Entwicklerprüfung
 
