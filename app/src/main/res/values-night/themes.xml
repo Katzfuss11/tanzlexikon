@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Startfenster bei dunkler Darstellung (Handy dunkel oder in der App "Dunkel" gewählt, ab Android 12). -->
+    <style name="Theme.Tanzlexikon" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/start_background</item>
+    </style>
+</resources>

@@ -13,6 +13,7 @@ import io.github.katzfuss11.tanzlexikon.lexikon.LexikonRepository
 import io.github.katzfuss11.tanzlexikon.media.GalleryWriter
 import io.github.katzfuss11.tanzlexikon.media.MediaChecker
 import io.github.katzfuss11.tanzlexikon.transfer.BackupService
+import io.github.katzfuss11.tanzlexikon.ui.theme.ThemeSettings
 import io.github.katzfuss11.tanzlexikon.update.UpdateChecker
 import io.github.katzfuss11.tanzlexikon.update.UpdateInstaller
 import io.github.katzfuss11.tanzlexikon.update.UpdateManager
@@ -35,6 +36,7 @@ class TanzlexikonApp : Application(), SingletonImageLoader.Factory {
     val galleryWriter: GalleryWriter by lazy { GalleryWriter(contentResolver) }
     val backupService: BackupService by lazy { BackupService(this, repository, galleryWriter, mediaChecker) }
     val figureShare: FigureShare by lazy { FigureShare(this, mediaChecker) }
+    val themeSettings: ThemeSettings by lazy { ThemeSettings.create(this) }
     val updateManager: UpdateManager by lazy {
         UpdateManager(checker = { UpdateChecker().check() }, installer = UpdateInstaller(this), scope = appScope)
     }

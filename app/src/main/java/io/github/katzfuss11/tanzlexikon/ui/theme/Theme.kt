@@ -34,7 +34,15 @@ private val Dark = darkColorScheme(
     surface = Color(0xFF211D28),
 )
 
+/** Ob dunkel gezeichnet wird: nach Wahl in den Einstellungen oder wie am Handy eingestellt. */
 @Composable
-fun TanzlexikonTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = if (isSystemInDarkTheme()) Dark else Light, content = content)
+fun ThemeMode.isDark(): Boolean = when (this) {
+    ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    ThemeMode.LIGHT -> false
+    ThemeMode.DARK -> true
+}
+
+@Composable
+fun TanzlexikonTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+    MaterialTheme(colorScheme = if (dark) Dark else Light, content = content)
 }

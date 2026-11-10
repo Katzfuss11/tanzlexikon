@@ -12,7 +12,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.remember
+import io.github.katzfuss11.tanzlexikon.ui.theme.ThemeMode
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
@@ -74,6 +81,12 @@ fun EinstellungenScreen(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.menu_settings)) }, navigationIcon = { BackButton(onBack) }) },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+            SectionTitle(stringResource(R.string.settings_appearance))
+            val themeSettings = (LocalContext.current.applicationContext as TanzlexikonApp).themeSettings
+            val themeMode by themeSettings.mode.collectAsStateWithLifecycle()
+            ThemeChooser(themeMode, themeSettings::set)
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
             SectionTitle(stringResource(R.string.settings_backup))
             ListItem(
                 headlineContent = { Text(stringResource(R.string.export_all)) },
@@ -168,6 +181,47 @@ private fun resultMessage(state: BackupState): String? {
             is ImportOutcome.NotEnoughSpace -> stringResource(R.string.error_space, Formatter.formatShortFileSize(context, o.requiredBytes))
         }
         else -> null
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ThemeChooser(selected: ThemeMode, onSelect: (ThemeMode) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val label = @Composable { m: ThemeMode ->
+        stringResource(
+            when (m) {
+                ThemeMode.SYSTEM -> R.string.theme_system
+                ThemeMode.LIGHT -> R.string.theme_light
+                ThemeMode.DARK -> R.string.theme_dark
+            },
+        )
+    }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        OutlinedTextField(
+            value = label(selected),
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            label = { Text(stringResource(R.string.theme_label)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            ThemeMode.entries.forEach { m ->
+                DropdownMenuItem(
+                    text = { Text(label(m)) },
+                    onClick = {
+                        onSelect(m)
+                        expanded = false
+                    },
+                )
+            }
+        }
     }
 }
 
