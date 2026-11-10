@@ -21,6 +21,11 @@ Den Schlüssel legst du **selbst** an. Die Passwörter tippst du nur in dein eig
    ```
    "$JAVA_HOME/bin/keytool" -genkeypair -v -keystore ~/tanzlexikon-schluessel/tanzlexikon.jks -alias tanzlexikon -keyalg RSA -keysize 4096 -validity 10000
    ```
+   Falls du stattdessen in **PowerShell** arbeitest (Fehler „Unerwartetes Token“), nimm diese beiden Zeilen statt der Befehle aus Schritt 1 und 2:
+   ```
+   New-Item -ItemType Directory -Force "$HOME\tanzlexikon-schluessel"
+   & "C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe" -genkeypair -v -keystore "$HOME\tanzlexikon-schluessel\tanzlexikon.jks" -alias tanzlexikon -keyalg RSA -keysize 4096 -validity 10000
+   ```
    - Zuerst fragt `keytool` zweimal nach einem **Passwort** für die Schlüsseldatei. Beim Tippen erscheinen keine Zeichen, das ist normal. Nimm ein langes Passwort und schreibe es sofort in deinen Passwortmanager.
    - Danach fragt es nach Name, Organisation, Ort usw. Es genügt, bei „Vor- und Nachname“ deinen Namen einzugeben. Die übrigen Fragen bestätigst du mit Enter. Am Ende tippst du `ja`.
    - Falls noch nach einem eigenen Passwort für den Alias gefragt wird: Enter drücken, dann gilt dasselbe Passwort.
