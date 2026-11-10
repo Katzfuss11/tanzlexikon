@@ -192,6 +192,7 @@ So veröffentlichst du eine neue Version:
 ## Wenn etwas schiefgeht
 
 - **PowerShell meldet „Unerwartetes Token“ oder „wurde nicht als Name eines Cmdlet … erkannt“:** Der Befehl wurde nicht vollständig kopiert, oder du bist im falschen Ordner. Gib die beiden Zeilen aus „Zu Beginn“ ein und versuche es noch einmal.
+- **Das Bauen meldet „JAVA_HOME is not set“ oder „JAVA_HOME is set to an invalid directory“:** Die zweite Zeile aus „Zu Beginn“ (`$env:JAVA_HOME = …`) fehlt in diesem PowerShell-Fenster. Gib sie ein und starte den Befehl noch einmal.
 - **Das Bauen meldet ein falsches Passwort:** Öffne `keystore.properties` mit `notepad keystore.properties` und prüfe das Passwort auf Tippfehler und Leerzeichen am Zeilenende.
 - **Auf dem Handy erscheint „App nicht installiert“ beim Update:** Entweder wurde die neue Version mit einem anderen Schlüssel gebaut, oder der `versionCode` ist nicht höher als vorher. Prüfe beides (Abschnitt 3, Schritt 2, und Abschnitt 6, Schritt 1).
 - **Du kommst nicht weiter:** Kopiere die Fehlermeldung aus PowerShell (markieren, Strg+C) und schick sie Claude.
