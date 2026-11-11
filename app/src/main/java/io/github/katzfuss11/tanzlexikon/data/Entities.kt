@@ -62,7 +62,26 @@ data class FigureEntity(
     val trashedAt: Long? = null,
     val trashedDanceName: String? = null,
     val trashedCategoryName: String? = null,
+    /** Gruppe „dieselbe Figur in anderen Tänzen“. null = in keiner Gruppe. */
+    val linkGroup: Long? = null,
+    /** Der (normalisierte) Name, für den schon einmal Verknüpfen vorgeschlagen wurde. */
+    val askedName: String? = null,
 )
+
+/**
+ * Eine direkte Verbindung zwischen zwei Figuren (vor allem im selben Tanz). Immer [figureA] < [figureB].
+ * Wird eine Figur endgültig gelöscht, verschwinden ihre Verbindungen mit.
+ */
+@Entity(
+    tableName = "figure_link",
+    primaryKeys = ["figureA", "figureB"],
+    foreignKeys = [
+        ForeignKey(entity = FigureEntity::class, parentColumns = ["id"], childColumns = ["figureA"], onDelete = ForeignKey.CASCADE),
+        ForeignKey(entity = FigureEntity::class, parentColumns = ["id"], childColumns = ["figureB"], onDelete = ForeignKey.CASCADE),
+    ],
+    indices = [Index("figureB")],
+)
+data class FigureLinkEntity(val figureA: Long, val figureB: Long)
 
 @Entity(
     tableName = "media",

@@ -1,6 +1,7 @@
 package io.github.katzfuss11.tanzlexikon.data
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -8,9 +9,11 @@ import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [CategoryEntity::class, DanceEntity::class, FigureEntity::class, MediaEntity::class],
-    version = 1,
+    entities = [CategoryEntity::class, DanceEntity::class, FigureEntity::class, MediaEntity::class, FigureLinkEntity::class],
+    version = 2,
     exportSchema = true,
+    // 1 → 2: Verweise (Spalten linkGroup, askedName und Tabelle figure_link). Alte Daten bleiben unverändert.
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
 )
 @TypeConverters(Converters::class)
 abstract class TanzDatabase : RoomDatabase() {
