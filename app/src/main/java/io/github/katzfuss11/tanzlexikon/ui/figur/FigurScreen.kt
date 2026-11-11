@@ -47,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalContext
+import io.github.katzfuss11.tanzlexikon.lexikon.FigureListItem
 import io.github.katzfuss11.tanzlexikon.TanzlexikonApp
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -74,7 +75,7 @@ import io.github.katzfuss11.tanzlexikon.ui.appViewModel
 fun FigurScreen(
     figureId: Long,
     onBack: () -> Unit,
-    onOpenFigure: (Long) -> Unit,
+    onOpenFigure: (FigureListItem) -> Unit,
     isNew: Boolean = false,
     vm: FigurViewModel = appViewModel(key = "figur$figureId") {
         FigurViewModel(it.repository, figureId, createSavedStateHandle(), it.appScope, isNew)
@@ -338,7 +339,7 @@ fun FigurScreen(
                 }
                 SeeAlsoSection(
                     links = state.links, editing = false,
-                    onOpen = { onOpenFigure(it.id) }, onRemove = {}, onAdd = {},
+                    onOpen = onOpenFigure, onRemove = {}, onAdd = {},
                 )
             }
             Spacer(Modifier.height(24.dp))

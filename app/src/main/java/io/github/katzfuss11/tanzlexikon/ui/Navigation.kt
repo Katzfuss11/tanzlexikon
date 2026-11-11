@@ -21,6 +21,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -119,7 +120,7 @@ fun TanzlexikonNavHost(nav: NavHostController = rememberNavController()) {
                 figureId = entry.arguments!!.getLong("figureId"),
                 isNew = entry.arguments!!.getBoolean("neu"),
                 onBack = { nav.popBackStack() },
-                onOpenFigure = { nav.navigate(Routes.figur(it)) },
+                onOpenFigure = { nav.openLinkedFigure(it.id, it.danceId) },
             )
         }
         composable(Routes.PAPIERKORB) { PapierkorbScreen(onBack = { nav.popBackStack() }) }
@@ -156,6 +157,15 @@ fun BackButton(onBack: () -> Unit) {
     IconButton(onClick = onBack) {
         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
     }
+}
+
+/**
+ * Sprung über „Siehe auch“: Der Verlauf wird zu Startseite → Tanz der Figur → Figur.
+ * Zurück führt so in den Tanz der gerade gezeigten Figur, nicht durch alle vorher besuchten Figuren.
+ */
+fun NavController.openLinkedFigure(figureId: Long, danceId: Long) {
+    navigate(Routes.tanz(danceId)) { popUpTo(Routes.START) }
+    navigate(Routes.figur(figureId))
 }
 
 /** Dauer eines Bildschirmwechsels. */
