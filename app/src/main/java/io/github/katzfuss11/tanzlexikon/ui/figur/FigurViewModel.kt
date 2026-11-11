@@ -11,6 +11,7 @@ import io.github.katzfuss11.tanzlexikon.data.Section
 import io.github.katzfuss11.tanzlexikon.lexikon.FigureDetail
 import io.github.katzfuss11.tanzlexikon.lexikon.FigureLinks
 import io.github.katzfuss11.tanzlexikon.lexikon.FigureListItem
+import io.github.katzfuss11.tanzlexikon.lexikon.LinkCandidate
 import io.github.katzfuss11.tanzlexikon.lexikon.LinkSuggestion
 import io.github.katzfuss11.tanzlexikon.lexikon.LexikonRepository
 import kotlinx.coroutines.CoroutineScope
@@ -59,8 +60,8 @@ data class FigurState(
     val links: FigureLinks = FigureLinks(),
     /** Vorschlag, gleichnamige Figuren zu verknüpfen; null = kein Dialog. */
     val suggestion: LinkSuggestion? = null,
-    /** Figuren, die beim Bearbeiten noch verknüpft werden können. */
-    val linkCandidates: List<FigureListItem> = emptyList(),
+    /** Figuren und Gruppen, die beim Bearbeiten noch verknüpft werden können. */
+    val linkCandidates: List<LinkCandidate> = emptyList(),
 )
 
 private data class EditState(val draft: FigurDraft? = null, @StringRes val error: Int? = null)
@@ -82,14 +83,16 @@ class FigurViewModel(
     private val suggestion = MutableStateFlow<LinkSuggestion?>(null)
 
     val state: StateFlow<FigurState> = combine(
-        repo.observeFigure(figureId), edit, repo.observeLinks(figureId), repo.observeAllFigures(), suggestion,
+        repo.observeFigure(figureId), edit, repo.observeLinks(figureId), repo.observeLinkCandidates(), suggestion,
     ) { detail, e, links, all, s ->
         val shown = (e.draft?.links ?: links).let { l -> (l.otherDances + l.sameDance).map { it.id }.toSet() }
         FigurState(
             detail = detail, editing = e.draft != null, draft = e.draft, error = e.error,
             hasChanges = e.draft != null && detail != null && e.draft != draftOf(detail, e.draft.baseLinks),
             links = links, suggestion = s,
-            linkCandidates = all.filter { it.id != figureId && it.id !in shown },
+            linkCandidates = all
+                .map { c -> c.copy(members = c.members.filter { it.id != figureId && it.id !in shown }) }
+                .filter { it.members.isNotEmpty() },
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, FigurState(null, editing = false, draft = null))
 
@@ -113,6 +116,9 @@ class FigurViewModel(
         else if (sameDance) d.copy(links = l.copy(sameDance = l.sameDance + target))
         else d.copy(links = l.copy(otherDances = l.otherDances + target))
     }
+
+    /** Verknüpft im Entwurf alle Figuren eines Auswahl-Eintrags, bei einer Gruppe also jede Figur darin. */
+    fun addLinks(candidate: LinkCandidate) = candidate.members.forEach(::addLink)
 
     /** Löst einen Verweis im Entwurf. */
     fun removeLink(target: FigureListItem) = updateDraft { d ->

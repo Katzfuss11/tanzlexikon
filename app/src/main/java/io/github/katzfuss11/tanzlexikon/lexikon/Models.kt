@@ -75,6 +75,14 @@ data class FigureLinks(
     val sameDance: List<FigureListItem> = emptyList(),
 )
 
+/**
+ * Ein Eintrag in der Auswahl „Figur verknüpfen“: eine einzelne Figur oder eine ganze Gruppe
+ * (dieselbe Figur in mehreren Tänzen), deren [members] in der Reihenfolge der Tänze stehen.
+ */
+data class LinkCandidate(val name: String, val members: List<FigureListItem>) {
+    val danceNames: List<String> get() = members.map { it.danceName }.distinct()
+}
+
 /** Vorschlag, eine Figur mit gleichnamigen Figuren aus anderen Tänzen zu verknüpfen. */
 data class LinkSuggestion(val figureName: String, val candidates: List<FigureListItem>)
 

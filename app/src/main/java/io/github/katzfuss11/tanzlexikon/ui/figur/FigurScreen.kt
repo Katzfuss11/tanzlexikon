@@ -219,7 +219,7 @@ fun FigurScreen(
     if (pickingLink && state.editing) {
         LinkPickerDialog(
             candidates = state.linkCandidates,
-            onPick = { vm.addLink(it); pickingLink = false },
+            onPick = { vm.addLinks(it); pickingLink = false },
             onDismiss = { pickingLink = false },
         )
     }

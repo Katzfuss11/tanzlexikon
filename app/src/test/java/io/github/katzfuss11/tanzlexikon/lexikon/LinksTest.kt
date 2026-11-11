@@ -187,4 +187,16 @@ class LinksTest {
         assertEquals(listOf("Ärmel", "Basic", "crossbody lead", "Crossbody Lead", "Zorro"), all.map { it.name })
         assertEquals(listOf("Cha-Cha-Cha", "Salsa"), all.filter { normalizeName(it.name) == "crossbody lead" }.map { it.danceName })
     }
+
+    @Test fun linkCandidates_groupIsOneEntry_withMembersInDanceOrder() = runTest {
+        val (s, r, c) = crossbodyGroup()
+        val h = fig("Rumba", "Hockeystick")
+
+        val cands = repo.observeLinkCandidates().first()
+
+        assertEquals(listOf("Crossbody Lead", "Hockeystick"), cands.map { it.name })
+        assertEquals(listOf(c, r, s), cands[0].members.map { it.id })
+        assertEquals(listOf("Cha-Cha-Cha", "Rumba", "Salsa"), cands[0].danceNames)
+        assertEquals(listOf(h), cands[1].members.map { it.id })
+    }
 }

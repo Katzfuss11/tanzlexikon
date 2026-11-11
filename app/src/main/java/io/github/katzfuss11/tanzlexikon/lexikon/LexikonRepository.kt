@@ -307,6 +307,18 @@ class LexikonRepository(private val db: TanzDatabase) {
     fun observeAllFigures(): Flow<List<FigureListItem>> =
         dao.observeActiveFigureRows().map { rows -> rows.sortedWith(byName).map { it.toItem() } }
 
+    /**
+     * Auswahl für „Figur verknüpfen“: Figuren einer Gruppe bilden einen Eintrag. Sortiert nach Namen;
+     * eine Gruppe steht dort, wo ihr erstes Mitglied nach Namen stünde, und trägt dessen Namen.
+     */
+    fun observeLinkCandidates(): Flow<List<LinkCandidate>> =
+        dao.observeActiveFigureRows().map { rows ->
+            rows.sortedWith(byName)
+                .groupBy { it.linkGroup?.let { g -> "g$g" } ?: "f${it.id}" }
+                .values
+                .map { group -> LinkCandidate(group.first().name, group.sortedWith(byDance).map { it.toItem() }) }
+        }
+
     /** „Siehe auch“ einer Figur, laufend aktuell. */
     fun observeLinks(figureId: Long): Flow<FigureLinks> =
         combine(dao.observeFigure(figureId), dao.observeActiveFigureRows(), dao.observeFigureLinks()) { self, rows, links ->

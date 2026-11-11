@@ -33,10 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.katzfuss11.tanzlexikon.R
 import io.github.katzfuss11.tanzlexikon.lexikon.FigureLinks
 import io.github.katzfuss11.tanzlexikon.lexikon.FigureListItem
+import io.github.katzfuss11.tanzlexikon.lexikon.LinkCandidate
 import io.github.katzfuss11.tanzlexikon.lexikon.LinkSuggestion
 
 /**
@@ -106,11 +108,15 @@ private fun LinkGroup(
     }
 }
 
-/** Auswahl einer Figur zum Verknüpfen, mit Suche im Namen. Ein Tipp wählt aus und schließt. */
+/**
+ * Auswahl einer Figur zum Verknüpfen, mit Suche im Namen. Eine Gruppe ist ein Eintrag; darunter stehen
+ * ihre Tänze in einer Zeile, zu lang wird mit „…“ gekürzt. Ein Tipp wählt aus und schließt.
+ */
 @Composable
-fun LinkPickerDialog(candidates: List<FigureListItem>, onPick: (FigureListItem) -> Unit, onDismiss: () -> Unit) {
+fun LinkPickerDialog(candidates: List<LinkCandidate>, onPick: (LinkCandidate) -> Unit, onDismiss: () -> Unit) {
     var query by rememberSaveable { mutableStateOf("") }
-    val shown = candidates.filter { it.name.contains(query.trim(), ignoreCase = true) }
+    val q = query.trim()
+    val shown = candidates.filter { c -> c.members.any { it.name.contains(q, ignoreCase = true) } }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.link_figure)) },
@@ -127,12 +133,14 @@ fun LinkPickerDialog(candidates: List<FigureListItem>, onPick: (FigureListItem) 
                     Text(stringResource(R.string.no_matching_figures), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 LazyColumn(Modifier.heightIn(max = 360.dp)) {
-                    items(shown, key = { it.id }) { item ->
+                    items(shown, key = { it.members.first().id }) { c ->
                         ListItem(
-                            headlineContent = { Text(item.name) },
-                            supportingContent = { Text(item.danceName) },
+                            headlineContent = { Text(c.name) },
+                            supportingContent = {
+                                Text(c.danceNames.joinToString(", "), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            modifier = Modifier.clickable { onPick(item) },
+                            modifier = Modifier.clickable { onPick(c) },
                         )
                     }
                 }
