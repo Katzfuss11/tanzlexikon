@@ -3,7 +3,6 @@ package io.github.katzfuss11.tanzlexikon.transfer
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
 import android.os.StatFs
 import android.provider.MediaStore
@@ -16,7 +15,6 @@ import io.github.katzfuss11.tanzlexikon.media.GalleryWriter
 import io.github.katzfuss11.tanzlexikon.media.MediaChecker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.io.FilterInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -111,24 +109,17 @@ class BackupService(
     /** Sichert den jetzigen Stand in den Download-Ordner, Unterordner "Tanzlexikon". */
     suspend fun safetyExport(now: Long): Uri = withContext(Dispatchers.IO) {
         val name = "tanzlexikon-vor-import-" + SimpleDateFormat("yyyy-MM-dd-HHmm", Locale.ROOT).format(Date(now)) + ".zip"
-        if (Build.VERSION.SDK_INT >= 29) {
-            val values = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-                put(MediaStore.MediaColumns.MIME_TYPE, "application/zip")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Tanzlexikon")
-                put(MediaStore.MediaColumns.IS_PENDING, 1)
-            }
-            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                ?: throw IOException("Sicherung im Download-Ordner nicht möglich")
-            resolver.openOutputStream(uri)!!.use { export(it) { _, _ -> } }
-            resolver.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
-            uri
-        } else {
-            val dir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "Tanzlexikon").apply { mkdirs() }
-            val file = File(dir, name)
-            file.outputStream().use { export(it) { _, _ -> } }
-            Uri.fromFile(file)
+        val values = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+            put(MediaStore.MediaColumns.MIME_TYPE, "application/zip")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Tanzlexikon")
+            put(MediaStore.MediaColumns.IS_PENDING, 1)
         }
+        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+            ?: throw IOException("Sicherung im Download-Ordner nicht möglich")
+        resolver.openOutputStream(uri)!!.use { export(it) { _, _ -> } }
+        resolver.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
+        uri
     }
 
     /** Mindestens 50 MB sollen nach dem Import noch frei sein. */

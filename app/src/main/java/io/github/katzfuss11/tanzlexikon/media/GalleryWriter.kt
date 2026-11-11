@@ -4,10 +4,8 @@ import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.ContentValues
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import java.io.File
 import java.io.IOException
 import java.io.InputStream
 
@@ -25,16 +23,12 @@ class GalleryWriter(private val resolver: ContentResolver) {
         val isImage = mimeType.startsWith("image/")
         val collection = collection(isImage)
         findExisting(collection, displayName, size)?.let { return it }
-        return if (Build.VERSION.SDK_INT >= 29) insertModern(collection, displayName, mimeType, isImage, data)
-        else insertLegacy(collection, displayName, mimeType, isImage, data)
+        return insert(collection, displayName, mimeType, isImage, data)
     }
 
-    private fun collection(isImage: Boolean): Uri = when {
-        Build.VERSION.SDK_INT >= 29 && isImage -> MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-        Build.VERSION.SDK_INT >= 29 -> MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-        isImage -> MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        else -> MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-    }
+    private fun collection(isImage: Boolean): Uri =
+        if (isImage) MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        else MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
 
     private fun findExisting(collection: Uri, displayName: String, size: Long): Uri? =
         resolver.query(
@@ -48,7 +42,7 @@ class GalleryWriter(private val resolver: ContentResolver) {
     private fun folder(isImage: Boolean) =
         (if (isImage) Environment.DIRECTORY_PICTURES else Environment.DIRECTORY_MOVIES) + "/Tanzlexikon"
 
-    private fun insertModern(collection: Uri, displayName: String, mimeType: String, isImage: Boolean, data: InputStream): Uri {
+    private fun insert(collection: Uri, displayName: String, mimeType: String, isImage: Boolean, data: InputStream): Uri {
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
             put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
@@ -66,21 +60,5 @@ class GalleryWriter(private val resolver: ContentResolver) {
             runCatching { resolver.delete(uri, null, null) }
             throw e
         }
-    }
-
-    @Suppress("DEPRECATION")
-    private fun insertLegacy(collection: Uri, displayName: String, mimeType: String, isImage: Boolean, data: InputStream): Uri {
-        val dir = File(Environment.getExternalStorageDirectory(), folder(isImage)).apply { mkdirs() }
-        var target = File(dir, displayName)
-        var i = 1
-        while (target.exists()) target = File(dir, "${target.nameWithoutExtension.substringBefore(" (")} (${i++}).${target.extension}")
-        target.outputStream().use { data.copyTo(it, 64 * 1024) }
-        val values = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, target.name)
-            put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
-            put(MediaStore.MediaColumns.DATA, target.absolutePath)
-            put(MediaStore.MediaColumns.SIZE, target.length())
-        }
-        return resolver.insert(collection, values) ?: throw IOException("Galerie hat die Datei abgelehnt")
     }
 }

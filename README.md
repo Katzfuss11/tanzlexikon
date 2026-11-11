@@ -18,7 +18,7 @@ Eine Android-App als Gedächtnisstütze für Tanzfiguren: Figuren aus der Tanzsc
 1. Die neueste `app-release.apk` unter [Releases](https://github.com/Katzfuss11/tanzlexikon/releases) auf das Handy laden.
 2. Die Datei antippen, „Unbekannte Apps installieren“ erlauben und installieren.
 
-Voraussetzung: Android 8 oder neuer.
+Voraussetzung: Android 10 oder neuer.
 
 ## Anleitungen
 
