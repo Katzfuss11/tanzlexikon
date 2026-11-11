@@ -3,7 +3,7 @@ Wird in der App unter Einstellungen → Über → Versionsverlauf angezeigt.
 Neue Version: oben einen Abschnitt „## Versionsnummer · Datum“ mit Punkten „- …“ ergänzen.
 Ein Test prüft, dass der oberste Abschnitt zur Versionsnummer der App passt.
 
-## 0.1.3
+## 0.1.3 · 12.11.2026
 - Siehe auch: Figuren lassen sich verknüpfen – dieselbe Figur in anderen Tänzen und verwandte Figuren im selben Tanz. Ein Tipp springt zur verknüpften Figur.
 - Gibt es eine neue Figur unter gleichem Namen schon in anderen Tänzen, schlägt die App vor, sie zu verknüpfen.
 - Startseite: Über das Symbol oben lässt sich zwischen „Nach Tanz“ und einer Liste aller Figuren, sortiert nach Namen, umschalten.
