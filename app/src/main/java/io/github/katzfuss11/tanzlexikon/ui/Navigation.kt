@@ -1,5 +1,7 @@
 package io.github.katzfuss11.tanzlexikon.ui
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
@@ -9,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.katzfuss11.tanzlexikon.ui.empfang.EmpfangScreen
 import androidx.compose.ui.res.stringResource
@@ -71,7 +74,16 @@ fun TanzlexikonNavHost(nav: NavHostController = rememberNavController()) {
             nav.navigate(Routes.EMPFANG) { launchSingleTop = true }
         }
     }
-    NavHost(navController = nav, startDestination = Routes.START) {
+    // Beim Hineingehen gleitet der Bildschirm nach links weg, beim Zurückgehen nach rechts.
+    val slide = tween<IntOffset>(SLIDE_MS)
+    NavHost(
+        navController = nav,
+        startDestination = Routes.START,
+        enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, slide) },
+        exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, slide) },
+        popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, slide) },
+        popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, slide) },
+    ) {
         composable(Routes.START) {
             StartScreen(
                 onOpenDance = { nav.navigate(Routes.tanz(it)) },
@@ -145,3 +157,6 @@ fun BackButton(onBack: () -> Unit) {
         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
     }
 }
+
+/** Dauer eines Bildschirmwechsels. */
+private const val SLIDE_MS = 300
