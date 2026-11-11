@@ -67,31 +67,49 @@ Ein Dialog, zum Beispiel:
 > [Nicht verknüpfen] [Verknüpfen]
 
 - Genannt werden die Tänze aller Kandidaten. Es gibt eine einzige Entscheidung für alle Kandidaten zusammen. *(Meine Wahl: einfacher als einzelne Häkchen. Wer einzelne nicht will, löst sie danach.)*
-- „Verknüpfen“ legt je einen Verweis zwischen der Figur und jedem Kandidaten an. Die Kandidaten werden dadurch nicht untereinander verknüpft.
+- „Verknüpfen“ nimmt die Figur und alle Kandidaten in eine gemeinsame Gruppe auf (siehe unten). Die Kandidaten liegen ja alle in anderen Tänzen.
 - Schließen des Dialogs ohne Antwort (Zurück, daneben tippen) zählt als „Nicht verknüpfen“. *(Meine Wahl, damit niemand in einer Schleife landet.)*
 
-### Jeder Verweis gilt einzeln (Wunsch des Autors)
+### Zwei Arten von Verweisen (Wunsch des Autors)
 
-Ein Verweis verbindet genau zwei Figuren und ist auf beiden Seiten sichtbar. Wer „Fächer“ mit „Hockeystick“ verknüpft, sieht bei „Fächer“ den „Hockeystick“ und bei „Hockeystick“ den „Fächer“. Verweise setzen sich **nicht** fort: Ist „Hockeystick“ außerdem mit „New York“ verknüpft, zeigt „Fächer“ trotzdem nur „Hockeystick“. Zwischen zwei Figuren gibt es höchstens einen Verweis. Eine Figur kann nicht mit sich selbst verknüpft werden.
+**Zwischen verschiedenen Tänzen: dieselbe Figur, eine Gruppe.** Ein Verweis zwischen Figuren aus verschiedenen Tänzen bedeutet in der Regel: Das ist dieselbe Figur. Solche Figuren bilden eine Gruppe. Werden Crossbody Lead in Salsa und Rumba verknüpft und später Cha-Cha-Cha mit Salsa, gehören alle drei zusammen. Ist eine der beiden Figuren schon in einer anderen Gruppe, werden die Gruppen zusammengelegt. Das gilt für Vorschläge und für Verweise von Hand, auch bei verschiedenen Namen.
+
+**Im selben Tanz: eine einzelne Verbindung.** Ein Verweis zwischen zwei Figuren desselben Tanzes (etwa „Fächer“ ↔ „Hockeystick“ in der Rumba, ähnliche oder aufeinander aufbauende Figuren) verbindet genau diese zwei. Er setzt sich nicht fort und wirkt nicht auf andere Tänze. Er ist auf beiden Seiten sichtbar.
+
+**Die eine Regel, die beides zusammenhält:** Eine Figur zeigt von ihrer Gruppe nur die Mitglieder aus *anderen* Tänzen. Figuren aus dem eigenen Tanz zeigt sie nur über eine direkte Verbindung. Eine Gruppe darf deshalb beliebig viele Figuren eines Tanzes enthalten (kein Limit, Wunsch des Autors). Beispiel:
+1. Crossbody Lead in Salsa, Rumba und Cha-Cha-Cha sind eine Gruppe.
+2. Die Salsa-Figur wird außerdem mit Rumba „Crossbody Lead mit Drehung“ verknüpft. Die kommt in die Gruppe. Salsa und Cha-Cha-Cha zeigen jetzt beide Rumba-Figuren. Rumba „Crossbody Lead“ zeigt Salsa und Cha-Cha-Cha, die Drehung aber nicht, weil sie im selben Tanz liegt.
+3. Rumba „Crossbody Lead“ ↔ Rumba „Crossbody Lead mit Drehung“ werden direkt verbunden. Jetzt zeigen sich die beiden gegenseitig.
+
+Zwischen zwei Figuren gibt es höchstens einen direkten Verweis. Eine Figur kann nicht mit sich selbst verknüpft werden. Maßgeblich ist immer der Tanz, in dem eine Figur *gerade* liegt. Landet eine Figur durch Wiederherstellen in einem anderen Tanz, ordnen sich ihre Verweise danach neu ein.
 
 **Umbenennen behält die Verweise.** Meist korrigiert man damit nur die Schreibweise, und bei Verweisen von Hand spielt der Name ohnehin keine Rolle. Passt der neue Name zu weiteren Figuren, kommt für ihn der Vorschlag. *(Meine Wahl: der Autor hat den Verweisen zugestimmt, sie verschwinden nicht stillschweigend.)*
 
 ### Von Hand verknüpfen (Wunsch des Autors)
 
 Beim Bearbeiten einer Figur gibt es im Abschnitt „Siehe auch“ einen Knopf **„Figur verknüpfen“**. Er öffnet eine Auswahl aller Figuren mit Suchfeld (Suche im Namen). Angezeigt wird jeweils der Figurenname und klein darunter der Tanz, wie in der Liste „Alle Figuren“.
-- Wählbar sind alle Figuren außer der Figur selbst, außer schon verknüpften und außer solchen im Papierkorb, **auch Figuren aus demselben Tanz** und Figuren mit anderem Namen.
+- Wählbar sind alle Figuren außer der Figur selbst, außer schon angezeigten und außer solchen im Papierkorb, also auch Figuren aus demselben Tanz und Figuren mit anderem Namen.
+- Eine Figur aus einem anderen Tanz kommt in die Gruppe, eine aus demselben Tanz wird direkt verbunden.
 - Ein Tipp auf eine Figur fügt sie dem Entwurf hinzu und schließt die Auswahl. *(Meine Wahl: eine Figur pro Durchgang, einfacher als Mehrfachauswahl.)*
 - Wie alle Änderungen beim Bearbeiten wird das erst mit „Speichern“ wirksam und mit „Abbrechen“ verworfen.
 
 ### Anzeige auf der Figurenseite
 
-Unten auf der Figurenseite, unter den drei Bereichen, steht ein Abschnitt **„Siehe auch“** mit einem Eintrag pro verknüpfter Figur: der Figurenname, klein darunter der Tanz. Ein Tipp öffnet diese Figur mit dem normalen Übergang nach links, und Zurück führt zur vorherigen Figur zurück. Ohne Verweise fehlt der Abschnitt außerhalb des Bearbeitens ganz.
+Unten auf der Figurenseite, unter den drei Bereichen, steht ein Abschnitt **„Siehe auch“** mit zwei Teilen:
+- **„In anderen Tänzen“:** die Mitglieder der Gruppe aus anderen Tänzen.
+- **„In diesem Tanz“:** die direkt verbundenen Figuren aus demselben Tanz.
+
+Jeder Eintrag zeigt den Figurennamen, klein darunter den Tanz. Ein Tipp öffnet diese Figur mit dem normalen Übergang nach links, und Zurück führt zur vorherigen Figur zurück. Leere Teile fehlen. Ohne Verweise fehlt der Abschnitt außerhalb des Bearbeitens ganz.
 
 Sortierung der Einträge: in der Reihenfolge der Tänze auf der Startseite, innerhalb eines Tanzes in der Reihenfolge der Figuren dort. *(Meine Wahl.)*
 
 ### Verweis lösen
 
-Beim Bearbeiten einer Figur hat jeder Eintrag in „Siehe auch“ einen Knopf zum Lösen. Lösen entfernt genau diesen einen Verweis, auf beiden Seiten. Andere Verweise der beiden Figuren bleiben. Beide Figuren gelten danach als „schon gefragt“ für ihren Namen, damit ein gelöster Verweis zwischen gleichnamigen Figuren nicht wieder vorgeschlagen wird. *(Meine Wahl.)* Wie das Entfernen von Medien wird auch das Lösen erst mit „Speichern“ wirksam und mit „Abbrechen“ verworfen. *(Meine Wahl, passt zum übrigen Bearbeiten.)*
+Beim Bearbeiten einer Figur hat jeder Eintrag in „Siehe auch“ einen Knopf zum Lösen.
+- **Unter „In anderen Tänzen“** nimmt Lösen die Figur *dieses Eintrags* aus der Gruppe. Wer bei der Salsa-Figur neben „Rumba“ auf Lösen tippt, meint: „Die Rumba-Figur gehört nicht dazu.“ Die übrigen bleiben eine Gruppe. Ihre Verbindungen im eigenen Tanz behält die herausgenommene Figur.
+- **Unter „In diesem Tanz“** verschwindet nur diese eine Verbindung, auf beiden Seiten.
+
+Beide beteiligten Figuren gelten danach als „schon gefragt“ für ihren Namen, damit ein gelöster Verweis zwischen gleichnamigen Figuren nicht wieder vorgeschlagen wird. *(Meine Wahl.)* Wie das Entfernen von Medien wird auch das Lösen erst mit „Speichern“ wirksam und mit „Abbrechen“ verworfen. *(Meine Wahl, passt zum übrigen Bearbeiten.)*
 
 Wer einen Vorschlag abgelehnt hat und die Verknüpfung doch will, nimmt „Figur verknüpfen“.
 
@@ -99,8 +117,8 @@ Die Rückfrage „Änderungen verwerfen?“ berücksichtigt auch geänderte Verw
 
 ### Papierkorb und Löschen
 
-- Eine Figur im Papierkorb erscheint bei den anderen nicht in „Siehe auch“. Ihre Verweise bleiben aber erhalten. Wird sie wiederhergestellt, ist sie wieder verknüpft.
-- Endgültig gelöschte Figuren (nach 30 Tagen) verlieren ihre Verweise.
+- Eine Figur im Papierkorb erscheint bei den anderen nicht in „Siehe auch“. Gruppe und Verbindungen behält sie aber. Wird sie wiederhergestellt, ist sie wieder verknüpft.
+- Endgültig gelöschte Figuren (nach 30 Tagen) verlieren Gruppe und Verbindungen. Bleibt in einer Gruppe nur eine Figur übrig, ist sie nicht mehr verknüpft.
 - Ein Tanz lässt sich wie bisher nur löschen, wenn er keine Figuren mehr enthält (außer solchen im Papierkorb). Für die Verweise ändert sich dadurch nichts.
 
 ### Sicherung und Teilen
@@ -149,7 +167,7 @@ Auf der Startseite sitzt oben in der Leiste, links neben dem Menü (⋮), ein Sy
 
 ## Dem Builder überlassen
 
-- Wie Verweise und das „schon gefragt für Namen X“ gespeichert werden (eigene Tabelle für Verweise, Spalte an der Figur o. Ä.).
+- Wie Gruppen, direkte Verbindungen und das „schon gefragt für Namen X“ gespeichert werden (Gruppen-Spalte an der Figur, eigene Tabelle für Verbindungen o. Ä.).
 - Genaue Formulierungen und Symbole, im Ton der bestehenden App.
 - Wie der Abschnitt „Siehe auch“ und die Auswahl beim Verknüpfen aussehen, passend zu den bestehenden Bereichskarten.
 - Wie die Übergänge technisch umgesetzt werden.
