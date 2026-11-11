@@ -92,4 +92,19 @@ class StartViewModelTest {
         }
         assertNull(state.message)
     }
+
+    @Test fun toggleView_switchesAndExposesSortedFigures() {
+        val prefs = ApplicationProvider.getApplicationContext<Context>().getSharedPreferences("test-start-vm", Context.MODE_PRIVATE)
+        prefs.edit().clear().commit()
+        val vm = StartViewModel(repo, viewSettings = StartViewSettings(prefs))
+        val rumba = rumbaId()
+        await { repo.addFigure(rumba, "Hockeystick"); repo.addFigure(rumba, "Fächer") }
+
+        vm.toggleView()
+
+        val s = await { vm.state.first { it.allFigures.size == 2 } }
+        assertEquals(StartView.ALL_FIGURES, s.view)
+        assertEquals(listOf("Fächer", "Hockeystick"), s.allFigures.map { it.name })
+        assertEquals(StartView.ALL_FIGURES, StartViewSettings(prefs).view.value)
+    }
 }

@@ -26,6 +26,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.cancel
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -34,6 +36,8 @@ class FigurViewModelTest {
     private lateinit var repo: LexikonRepository
     private lateinit var vm: FigurViewModel
     private var figureId = 0L
+    /** Alle erzeugten ViewModels; sie werden am Ende beendet, damit keiner mehr auf die Datenbank lauscht. */
+    private val created = mutableListOf<FigurViewModel>()
 
     private fun <T> await(block: suspend () -> T): T = runBlocking { withTimeout(5_000) { block() } }
 
@@ -47,11 +51,12 @@ class FigurViewModelTest {
             repo.saveFigure(id, "Fächer", "Grundidee", "Führen", "", emptyList())
             id
         }
-        vm = FigurViewModel(repo, figureId)
+        vm = FigurViewModel(repo, figureId).also(created::add)
         await { vm.state.first { it.detail != null } }
     }
 
     @After fun tearDown() {
+        created.forEach { it.viewModelScope.cancel() }
         db.close()
         Dispatchers.resetMain()
     }
@@ -59,12 +64,12 @@ class FigurViewModelTest {
     // Wie nach dem Beenden durch Android: nur die gesicherten Werte überleben, das ViewModel ist neu.
     private fun recreated(saved: SavedStateHandle): FigurViewModel {
         val restored = SavedStateHandle(saved.keys().associateWith { saved.get<Any>(it) })
-        return FigurViewModel(repo, figureId, restored).also { v -> await { v.state.first { it.detail != null } } }
+        return FigurViewModel(repo, figureId, restored).also(created::add).also { v -> await { v.state.first { it.detail != null } } }
     }
 
     @Test fun draft_survivesRecreation() {
         val saved = SavedStateHandle()
-        val first = FigurViewModel(repo, figureId, saved)
+        val first = FigurViewModel(repo, figureId, saved).also(created::add)
         await { first.state.first { it.detail != null } }
         first.startEditing()
         first.updateDraft { it.copy(generalText = "Nach der Stunde getippt 💃") }
@@ -77,7 +82,7 @@ class FigurViewModelTest {
 
     @Test fun recordedVideo_afterRecreation_landsInChosenSection() {
         val saved = SavedStateHandle()
-        val first = FigurViewModel(repo, figureId, saved)
+        val first = FigurViewModel(repo, figureId, saved).also(created::add)
         await { first.state.first { it.detail != null } }
         first.startEditing()
         first.updateDraft { it.copy(leaderText = "Hand höher") }
@@ -93,7 +98,7 @@ class FigurViewModelTest {
 
     @Test fun relink_afterRecreation_replacesTheChosenMedium() {
         val saved = SavedStateHandle()
-        val first = FigurViewModel(repo, figureId, saved)
+        val first = FigurViewModel(repo, figureId, saved).also(created::add)
         await { first.state.first { it.detail != null } }
         first.startEditing()
         first.addMedia(Section.GENERAL, listOf(NewMedia(MediaKind.VIDEO, "content://alt/1"), NewMedia(MediaKind.VIDEO, "content://alt/2")))
@@ -186,5 +191,161 @@ class FigurViewModelTest {
         vm.save()
         val saved = await { vm.state.first { !it.editing && it.detail!!.media.isNotEmpty() } }.detail!!.media
         assertEquals(listOf(20L), saved.map { it.sizeBytes })
+    }
+
+    // ---- Siehe auch ----
+
+    private suspend fun danceId(name: String) = repo.observeStart().first().flatMap { it.dances }.single { it.name == name }.id
+    private fun fig(dance: String, name: String) = await { repo.addFigure(danceId(dance), name) }
+    private fun item(id: Long) = await { repo.observeAllFigures().first().single { it.id == id } }
+
+    @Test fun seeAlso_showsLinksFromRepository() {
+        val s = fig("Salsa", "Fächer")
+        await { repo.answerSuggestion(figureId, listOf(s), link = true) }
+
+        val links = await { vm.state.first { it.links.otherDances.isNotEmpty() } }.links
+        assertEquals(listOf("Salsa"), links.otherDances.map { it.danceName })
+    }
+
+    @Test fun editLinks_onlyAfterSave_cancelDiscards() {
+        val h = item(fig("Rumba", "Hockeystick"))
+
+        vm.startEditing()
+        vm.addLink(h)
+        assertTrue(await { repo.observeLinks(figureId).first() }.sameDance.isEmpty())
+        vm.cancelEditing()
+        assertTrue(vm.state.value.links.sameDance.isEmpty())
+
+        vm.startEditing()
+        vm.addLink(h)
+        vm.save()
+        val s = await { vm.state.first { !it.editing && it.links.sameDance.isNotEmpty() } }
+        assertEquals(listOf(h.id), s.links.sameDance.map { it.id })
+    }
+
+    @Test fun removeLink_marksHasChanges() {
+        val h = item(fig("Rumba", "Hockeystick"))
+        await { repo.saveLinks(figureId, emptyList(), listOf(h.id)) }
+        await { vm.state.first { it.links.sameDance.isNotEmpty() } }
+
+        vm.startEditing()
+        assertFalse(vm.state.value.hasChanges)
+        vm.removeLink(h)
+        assertTrue(vm.state.value.hasChanges)
+    }
+
+    @Test fun draftLinks_surviveRecreation() {
+        val h = item(fig("Rumba", "Hockeystick"))
+        val saved = SavedStateHandle()
+        val first = FigurViewModel(repo, figureId, saved).also(created::add)
+        await { first.state.first { it.detail != null } }
+        first.startEditing()
+        first.addLink(h)
+
+        val second = recreated(saved)
+
+        assertEquals(listOf(h.id), second.state.value.draft!!.links.sameDance.map { it.id })
+    }
+
+    @Test fun linkCandidates_excludeSelfAndShown() {
+        val h = item(fig("Rumba", "Hockeystick"))
+        val n = item(fig("Salsa", "New York"))
+        vm.startEditing()
+        val before = await { vm.state.first { it.linkCandidates.size >= 2 } }.linkCandidates.flatMap { it.members }.map { it.id }
+        assertTrue(h.id in before && n.id in before)
+        assertFalse(figureId in before)
+
+        vm.addLink(h)
+
+        val after = vm.state.value.linkCandidates.flatMap { it.members }.map { it.id }
+        assertFalse(h.id in after)
+        assertTrue(n.id in after)
+    }
+
+    @Test fun linkCandidates_groupIsOneEntry_pickAddsAllMembers() {
+        val s = fig("Salsa", "Crossbody Lead")
+        val c = fig("Cha-Cha-Cha", "Crossbody Lead")
+        await { repo.answerSuggestion(c, listOf(s), link = true) }
+        vm.startEditing()
+        val group = await { vm.state.first { st -> st.linkCandidates.any { it.members.size == 2 } } }
+            .linkCandidates.single { it.members.size == 2 }
+
+        vm.addLinks(group)
+
+        assertEquals(setOf(s, c), vm.state.value.draft!!.links.otherDances.map { it.id }.toSet())
+        assertTrue(vm.state.value.linkCandidates.none { it.members.any { m -> m.id == s || m.id == c } })
+    }
+
+    @Test fun save_oldFigure_firstTime_offersSuggestion_once() {
+        fig("Salsa", "Fächer")
+
+        vm.startEditing()
+        vm.save()
+        assertEquals(1, await { vm.state.first { !it.editing && it.suggestion != null } }.suggestion!!.candidates.size)
+        vm.answerSuggestion(link = false)
+        await { vm.state.first { it.suggestion == null } }
+
+        vm.startEditing()
+        vm.save()
+        assertNull(await { vm.state.first { !it.editing } }.suggestion)
+    }
+
+    @Test fun newFigure_offersSuggestionOnOpen() {
+        fig("Salsa", "Neu")
+        val r = fig("Rumba", "Neu")
+
+        val neu = FigurViewModel(repo, r, isNew = true).also(created::add)
+
+        assertEquals(1, await { neu.state.first { it.suggestion != null } }.suggestion!!.candidates.size)
+    }
+
+    @Test fun answerYes_linksAndClearsSuggestion() {
+        fig("Salsa", "Neu")
+        val neu = FigurViewModel(repo, fig("Rumba", "Neu"), isNew = true).also(created::add)
+        await { neu.state.first { it.suggestion != null } }
+
+        neu.answerSuggestion(link = true)
+
+        val s = await { neu.state.first { it.suggestion == null && it.links.otherDances.isNotEmpty() } }
+        assertEquals(listOf("Salsa"), s.links.otherDances.map { it.danceName })
+    }
+
+    @Test fun save_keepsLinksMadeElsewhereWhileEditing() {
+        val s = fig("Salsa", "Fächer")
+        vm.startEditing()
+        vm.updateDraft { it.copy(generalText = "Neu") }
+
+        // Während der Entwurf offen ist, wird anderswo verknüpft (z. B. Vorschlag bei einer empfangenen Figur).
+        await { repo.answerSuggestion(s, listOf(figureId), link = true) }
+        await { vm.state.first { it.links.otherDances.isNotEmpty() } }
+        vm.save()
+
+        await { vm.state.first { !it.editing } }
+        assertEquals(listOf(s), await { repo.observeLinks(figureId).first() }.otherDances.map { it.id })
+    }
+
+    @Test fun linkMadeElsewhereWhileEditing_isNotAChange() {
+        val s = fig("Salsa", "Fächer")
+        vm.startEditing()
+
+        await { repo.answerSuggestion(s, listOf(figureId), link = true) }
+        await { vm.state.first { it.links.otherDances.isNotEmpty() } }
+
+        assertFalse(vm.state.value.hasChanges)
+    }
+
+    @Test fun save_renameAndUnlink_stillAsksForNewName() {
+        val h = item(fig("Rumba", "Hockeystick"))
+        fig("Salsa", "Hammerlock")
+        await { repo.saveLinks(figureId, emptyList(), listOf(h.id)) }
+        await { vm.state.first { it.links.sameDance.isNotEmpty() } }
+
+        vm.startEditing()
+        vm.updateDraft { it.copy(name = "Hammerlock") }
+        vm.removeLink(h)
+        vm.save()
+
+        val s = await { vm.state.first { !it.editing } }
+        assertEquals(listOf("Salsa"), s.suggestion?.candidates?.map { it.danceName })
     }
 }

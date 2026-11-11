@@ -3,18 +3,23 @@ package io.github.katzfuss11.tanzlexikon.lexikon
 import androidx.room.withTransaction
 import io.github.katzfuss11.tanzlexikon.data.CategoryEntity
 import io.github.katzfuss11.tanzlexikon.data.DanceEntity
+import io.github.katzfuss11.tanzlexikon.data.ActiveFigureRow
 import io.github.katzfuss11.tanzlexikon.data.FigureEntity
+import io.github.katzfuss11.tanzlexikon.data.FigureLinkEntity
 import io.github.katzfuss11.tanzlexikon.data.MediaEntity
 import io.github.katzfuss11.tanzlexikon.data.MediaKind
 import io.github.katzfuss11.tanzlexikon.transfer.ArchCategory
 import io.github.katzfuss11.tanzlexikon.transfer.ArchDance
 import io.github.katzfuss11.tanzlexikon.transfer.ArchFigure
+import io.github.katzfuss11.tanzlexikon.transfer.ArchLink
 import io.github.katzfuss11.tanzlexikon.transfer.ArchMedia
 import io.github.katzfuss11.tanzlexikon.transfer.ArchiveManifest
 import io.github.katzfuss11.tanzlexikon.data.TanzDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import java.text.Collator
+import java.util.Locale
 
 /**
  * Alles, was die Bildschirme mit dem Lexikon tun dürfen, an einer Stelle.
@@ -144,10 +149,20 @@ class LexikonRepository(private val db: TanzDatabase) {
      */
     suspend fun snapshot(isAvailable: (MediaEntity) -> Boolean): ArchiveSnapshot = db.withTransaction {
         val files = mutableListOf<Pair<String, MediaEntity>>()
+        // Figuren bekommen Nummern 1..n, Gruppen werden auf 1..m umnummeriert (nur innerhalb der Sicherung).
+        val keys = mutableMapOf<Long, Int>()
+        val groups = mutableMapOf<Long, Int>()
         val categories = dao.allCategories().map { c ->
             ArchCategory(c.name, c.position, dao.dancesOf(c.id).map { d ->
                 ArchDance(d.name, d.position, dao.activeFiguresOf(d.id).map { f ->
-                    ArchFigure(f.name, f.position, f.generalText, f.leaderText, f.followerText, dao.mediaOf(f.id).map { m ->
+                    val key = keys.size + 1
+                    keys[f.id] = key
+                    ArchFigure(
+                        f.name, f.position, f.generalText, f.leaderText, f.followerText,
+                        key = key,
+                        linkGroup = f.linkGroup?.let { groups.getOrPut(it) { groups.size + 1 } },
+                        askedName = f.askedName,
+                        media = dao.mediaOf(f.id).map { m ->
                         val path = if (m.kind != MediaKind.YOUTUBE && isAvailable(m)) {
                             "media/${files.size + 1}.${fileExtension(m)}".also { files += it to m }
                         } else {
@@ -158,11 +173,17 @@ class LexikonRepository(private val db: TanzDatabase) {
                             youtubeUrl = m.uri.takeIf { m.kind == MediaKind.YOUTUBE },
                             file = path, displayName = m.displayName, mimeType = m.mimeType, sizeBytes = m.sizeBytes,
                         )
-                    })
+                    },
+                    )
                 })
             })
         }
-        ArchiveSnapshot(categories, files)
+        val links = dao.allFigureLinks().mapNotNull { l ->
+            val a = keys[l.figureA] ?: return@mapNotNull null
+            val b = keys[l.figureB] ?: return@mapNotNull null
+            ArchLink(a, b)
+        }
+        ArchiveSnapshot(categories, files, links)
     }
 
     /** Ersetzt den kompletten Bestand (auch den Papierkorb) in einer Transaktion. */
@@ -171,12 +192,26 @@ class LexikonRepository(private val db: TanzDatabase) {
         dao.deleteAllFigures()
         dao.deleteAllDances()
         dao.deleteAllCategories()
+        // Verweise aus der Sicherung übernehmen: Gruppen bekommen neue Nummern, Verbindungen laufen über key.
+        val ids = mutableMapOf<Int, Long>()
+        val groups = mutableMapOf<Int, Long>()
+        var nextGroup = 1L
         manifest.categories.forEach { c ->
             val categoryId = dao.insertCategory(CategoryEntity(name = c.name, position = c.position))
             c.dances.forEach { d ->
                 val danceId = dao.insertDance(DanceEntity(categoryId = categoryId, name = d.name, position = d.position))
-                d.figures.forEach { f -> insertArchFigure(danceId, f, f.position, uriFor) }
+                d.figures.forEach { f ->
+                    val id = insertArchFigure(danceId, f, f.position, uriFor)
+                    f.key?.let { ids[it] = id }
+                    f.linkGroup?.let { g -> dao.setLinkGroup(id, groups.getOrPut(g) { nextGroup++ }) }
+                    f.askedName?.let { dao.setAskedName(id, it) }
+                }
             }
+        }
+        manifest.links.forEach { l ->
+            val a = ids[l.a] ?: return@forEach
+            val b = ids[l.b] ?: return@forEach
+            if (a != b) dao.insertFigureLink(FigureLinkEntity(minOf(a, b), maxOf(a, b)))
         }
     }
 
@@ -266,8 +301,149 @@ class LexikonRepository(private val db: TanzDatabase) {
         return danceHits + figureHits
     }
 
+    // ---- Alle Figuren und Verweise ----
+
+    /** Alle Figuren außer dem Papierkorb, nach Namen (deutsch), bei gleichem Namen in der Reihenfolge der Tänze. */
+    fun observeAllFigures(): Flow<List<FigureListItem>> =
+        dao.observeActiveFigureRows().map { rows -> rows.sortedWith(byName).map { it.toItem() } }
+
+    /**
+     * Auswahl für „Figur verknüpfen“: Figuren einer Gruppe bilden einen Eintrag. Sortiert nach Namen;
+     * eine Gruppe steht dort, wo ihr erstes Mitglied nach Namen stünde, und trägt dessen Namen.
+     */
+    fun observeLinkCandidates(): Flow<List<LinkCandidate>> =
+        dao.observeActiveFigureRows().map { rows ->
+            rows.sortedWith(byName)
+                .groupBy { it.linkGroup?.let { g -> "g$g" } ?: "f${it.id}" }
+                .values
+                .map { group -> LinkCandidate(group.first().name, group.sortedWith(byDance).map { it.toItem() }) }
+        }
+
+    /** „Siehe auch“ einer Figur, laufend aktuell. */
+    fun observeLinks(figureId: Long): Flow<FigureLinks> =
+        combine(dao.observeFigure(figureId), dao.observeActiveFigureRows(), dao.observeFigureLinks()) { self, rows, links ->
+            self?.let { computeLinks(it, rows, links) } ?: FigureLinks()
+        }
+
+    /**
+     * Gleichnamige Figuren aus anderen Tänzen, die noch nicht in der Gruppe sind. null, wenn für diesen
+     * Namen schon gefragt wurde oder es keine gibt.
+     */
+    suspend fun linkSuggestion(figureId: Long): LinkSuggestion? = db.withTransaction {
+        val self = dao.figure(figureId) ?: return@withTransaction null
+        val name = normalizeName(self.name)
+        if (self.trashedAt != null || self.askedName == name) return@withTransaction null
+        val candidates = dao.activeFigureRows()
+            .filter { it.id != self.id && it.danceId != self.danceId && normalizeName(it.name) == name }
+            .filter { self.linkGroup == null || it.linkGroup != self.linkGroup }
+            .sortedWith(byDance)
+        if (candidates.isEmpty()) null else LinkSuggestion(self.name, candidates.map { it.toItem() })
+    }
+
+    /** Antwort auf einen Vorschlag. Danach wird für diese Figuren und ihre Namen nicht mehr gefragt. */
+    suspend fun answerSuggestion(figureId: Long, candidateIds: List<Long>, link: Boolean) = db.withTransaction {
+        val all = listOf(figureId) + candidateIds
+        if (link) joinGroups(all)
+        all.forEach { markAsked(it) }
+    }
+
+    /**
+     * Speichert „Siehe auch“ aus dem Bearbeiten: [otherDanceIds] und [sameDanceIds] sind die gewünschten Einträge.
+     * Neue Einträge aus anderen Tänzen kommen in die Gruppe, entfernte verlassen sie; im selben Tanz
+     * entstehen oder verschwinden einzelne Verbindungen.
+     */
+    suspend fun saveLinks(figureId: Long, otherDanceIds: List<Long>, sameDanceIds: List<Long>) = db.withTransaction {
+        val self = dao.figure(figureId) ?: return@withTransaction
+        val current = computeLinks(self, dao.activeFigureRows(), dao.allFigureLinks())
+        applyLinkChanges(
+            self,
+            fromOther = current.otherDances.map { it.id }.toSet(), fromSame = current.sameDance.map { it.id }.toSet(),
+            toOther = otherDanceIds.toSet(), toSame = sameDanceIds.toSet(),
+        )
+    }
+
+    /**
+     * Wie [saveLinks], aber nur die Änderungen von [from] (Stand beim Öffnen des Entwurfs) nach [to].
+     * So bleiben Verweise erhalten, die anderswo entstanden sind, während der Entwurf offen war.
+     */
+    suspend fun saveLinkChanges(figureId: Long, from: FigureLinks, to: FigureLinks) = db.withTransaction {
+        val self = dao.figure(figureId) ?: return@withTransaction
+        applyLinkChanges(
+            self,
+            fromOther = from.otherDances.map { it.id }.toSet(), fromSame = from.sameDance.map { it.id }.toSet(),
+            toOther = to.otherDances.map { it.id }.toSet(), toSame = to.sameDance.map { it.id }.toSet(),
+        )
+    }
+
+    /** Entfernte Einträge lösen, neue anlegen. Ob ein neuer Eintrag Gruppe oder Verbindung wird, entscheidet sein Tanz jetzt. */
+    private suspend fun applyLinkChanges(
+        self: FigureEntity,
+        fromOther: Set<Long>,
+        fromSame: Set<Long>,
+        toOther: Set<Long>,
+        toSame: Set<Long>,
+    ) {
+        val figureId = self.id
+        (fromOther - toOther).forEach { other ->
+            if (self.linkGroup != null && dao.figure(other)?.linkGroup == self.linkGroup) dao.setLinkGroup(other, null)
+            dao.deleteFigureLink(minOf(figureId, other), maxOf(figureId, other))
+            markAsked(figureId)
+            markAsked(other)
+        }
+        (fromSame - toSame).forEach { other ->
+            dao.deleteFigureLink(minOf(figureId, other), maxOf(figureId, other))
+            markAsked(figureId)
+            markAsked(other)
+        }
+        val added = ((toOther - fromOther) + (toSame - fromSame)) - figureId
+        val (sameDance, otherDance) = added.partition { dao.figure(it)?.danceId == self.danceId }
+        if (otherDance.isNotEmpty()) joinGroups(listOf(figureId) + otherDance)
+        sameDance.forEach { other -> dao.insertFigureLink(FigureLinkEntity(minOf(figureId, other), maxOf(figureId, other))) }
+    }
+
+    /** Legt alle [ids] in eine Gruppe; vorhandene Gruppen werden zusammengelegt. */
+    private suspend fun joinGroups(ids: List<Long>) {
+        val groups = ids.mapNotNull { dao.figure(it)?.linkGroup }.distinct()
+        val target = groups.firstOrNull() ?: dao.nextLinkGroup()
+        groups.drop(1).forEach { dao.mergeLinkGroup(it, target) }
+        ids.forEach { dao.setLinkGroup(it, target) }
+    }
+
+    private suspend fun markAsked(id: Long) {
+        dao.figure(id)?.let { dao.setAskedName(id, normalizeName(it.name)) }
+    }
+
+    private fun computeLinks(self: FigureEntity, rows: List<ActiveFigureRow>, links: List<FigureLinkEntity>): FigureLinks {
+        val direct = links.mapNotNull {
+            when (self.id) {
+                it.figureA -> it.figureB
+                it.figureB -> it.figureA
+                else -> null
+            }
+        }.toSet()
+        val partners = rows
+            .filter { it.id != self.id && (it.id in direct || (self.linkGroup != null && it.linkGroup == self.linkGroup)) }
+            .sortedWith(byDance)
+        return FigureLinks(
+            otherDances = partners.filter { it.danceId != self.danceId }.map { it.toItem() },
+            sameDance = partners.filter { it.danceId == self.danceId && it.id in direct }.map { it.toItem() },
+        )
+    }
+
+    private fun ActiveFigureRow.toItem() = FigureListItem(id, name, danceId, danceName)
+
     private companion object {
         const val FALLBACK_CATEGORY = "Sonstige"
         const val FALLBACK_DANCE = "Ohne Tanz"
+
+        /** Reihenfolge wie auf der Startseite: Kategorie, Tanz, Figur. */
+        val byDance: Comparator<ActiveFigureRow> =
+            compareBy<ActiveFigureRow>({ it.categoryPosition }, { it.dancePosition }, { it.figurePosition }, { it.id })
+
+        /** Deutsche Sortierung (Ä wie A), Groß-/Kleinschreibung zählt nicht; bei Gleichstand wie [byDance]. */
+        val byName: Comparator<ActiveFigureRow> = run {
+            val collator = Collator.getInstance(Locale.GERMAN).apply { strength = Collator.SECONDARY }
+            Comparator<ActiveFigureRow> { a, b -> collator.compare(a.name.trim(), b.name.trim()) }.then(byDance)
+        }
     }
 }

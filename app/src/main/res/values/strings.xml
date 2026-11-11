@@ -9,6 +9,17 @@
     <string name="discard_changes">Änderungen verwerfen?</string>
     <string name="discard">Verwerfen</string>
     <string name="keep_editing">Weiter bearbeiten</string>
+    <string name="see_also">Siehe auch</string>
+    <string name="see_also_other_dances">In anderen Tänzen</string>
+    <string name="see_also_same_dance">In diesem Tanz</string>
+    <string name="link_figure">Figur verknüpfen</string>
+    <string name="unlink">Verknüpfung lösen</string>
+    <string name="search_figure">Figur suchen</string>
+    <string name="no_matching_figures">Keine passende Figur.</string>
+    <string name="link_suggestion_intro">Diese Figur gibt es auch in:</string>
+    <string name="link_suggestion_text">Verknüpfen, damit du zwischen ihnen springen kannst?</string>
+    <string name="link">Verknüpfen</string>
+    <string name="dont_link">Nicht verknüpfen</string>
     <string name="save">Speichern</string>
     <string name="back">Zurück</string>
     <string name="more">Mehr</string>
@@ -46,6 +57,9 @@
     <!-- Tanz -->
     <string name="new_figure">Neue Figur</string>
     <string name="no_figures_yet">Noch keine Figuren. Tippe auf +, um die erste anzulegen.</string>
+    <string name="no_figures_at_all">Noch keine Figuren. Öffne einen Tanz und tippe auf +, um die erste anzulegen.</string>
+    <string name="show_all_figures">Alle Figuren anzeigen</string>
+    <string name="show_by_dance">Nach Tanz anzeigen</string>
     <string name="to_trash">In den Papierkorb</string>
     <string name="moved_to_trash">In den Papierkorb verschoben</string>
     <string name="undo">Rückgängig</string>
@@ -140,6 +154,10 @@
     <string name="error_generic">Das hat nicht geklappt: %1$s</string>
     <string name="settings_about">Über</string>
     <string name="installed_version">Installierte Version: %1$s</string>
+    <string name="changelog">Versionsverlauf</string>
+    <string name="changelog_hint">Was sich in jeder Version geändert hat</string>
+    <string name="changelog_version">Version %1$s</string>
+    <string name="changelog_upcoming">in Arbeit</string>
     <string name="open_trash_hint">Gelöschte Figuren der letzten 30 Tage</string>
 
     <!-- Updates -->

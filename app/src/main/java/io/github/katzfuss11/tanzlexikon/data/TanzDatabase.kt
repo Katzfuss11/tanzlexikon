@@ -1,6 +1,7 @@
 package io.github.katzfuss11.tanzlexikon.data
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -8,9 +9,11 @@ import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [CategoryEntity::class, DanceEntity::class, FigureEntity::class, MediaEntity::class],
-    version = 1,
+    entities = [CategoryEntity::class, DanceEntity::class, FigureEntity::class, MediaEntity::class, FigureLinkEntity::class],
+    version = 2,
     exportSchema = true,
+    // 1 → 2: Verweise (Spalten linkGroup, askedName und Tabelle figure_link). Alte Daten bleiben unverändert.
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
 )
 @TypeConverters(Converters::class)
 abstract class TanzDatabase : RoomDatabase() {
@@ -19,11 +22,12 @@ abstract class TanzDatabase : RoomDatabase() {
     companion object {
         const val FILE_NAME = "tanzlexikon.db"
 
-        fun build(context: Context, inMemory: Boolean = false): TanzDatabase {
+        /** [fileName] nur für Tests, die eine eigene Datei brauchen. */
+        fun build(context: Context, inMemory: Boolean = false, fileName: String = FILE_NAME): TanzDatabase {
             val builder = if (inMemory) {
                 Room.inMemoryDatabaseBuilder(context, TanzDatabase::class.java)
             } else {
-                Room.databaseBuilder(context, TanzDatabase::class.java, FILE_NAME)
+                Room.databaseBuilder(context, TanzDatabase::class.java, fileName)
             }
             return builder.addCallback(SeedCallback).build()
         }

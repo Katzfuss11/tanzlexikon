@@ -1,5 +1,7 @@
 package io.github.katzfuss11.tanzlexikon.ui
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
@@ -9,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.katzfuss11.tanzlexikon.ui.empfang.EmpfangScreen
 import androidx.compose.ui.res.stringResource
@@ -18,6 +21,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -32,19 +36,22 @@ import io.github.katzfuss11.tanzlexikon.ui.papierkorb.PapierkorbScreen
 import io.github.katzfuss11.tanzlexikon.ui.start.StartScreen
 import io.github.katzfuss11.tanzlexikon.ui.tanz.TanzScreen
 import io.github.katzfuss11.tanzlexikon.ui.suche.SucheScreen
+import io.github.katzfuss11.tanzlexikon.ui.versionen.VersionsverlaufScreen
 
 /** Die Adressen der Bildschirme. */
 object Routes {
     const val START = "start"
     const val TANZ = "tanz/{danceId}"
-    const val FIGUR = "figur/{figureId}"
+    const val FIGUR = "figur/{figureId}?neu={neu}"
     const val SUCHE = "suche"
     const val PAPIERKORB = "papierkorb"
     const val EINSTELLUNGEN = "einstellungen"
     const val EMPFANG = "empfang"
+    const val VERSIONSVERLAUF = "versionsverlauf"
 
     fun tanz(danceId: Long) = "tanz/$danceId"
-    fun figur(figureId: Long) = "figur/$figureId"
+    /** [neu]: frisch angelegt oder empfangen, dann wird einmal Verknüpfen vorgeschlagen. */
+    fun figur(figureId: Long, neu: Boolean = false) = "figur/$figureId?neu=$neu"
 }
 
 /**
@@ -70,7 +77,16 @@ fun TanzlexikonNavHost(nav: NavHostController = rememberNavController()) {
             nav.navigate(Routes.EMPFANG) { launchSingleTop = true }
         }
     }
-    NavHost(navController = nav, startDestination = Routes.START) {
+    // Beim Hineingehen gleitet der Bildschirm nach links weg, beim Zurückgehen nach rechts.
+    val slide = tween<IntOffset>(SLIDE_MS)
+    NavHost(
+        navController = nav,
+        startDestination = Routes.START,
+        enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, slide) },
+        exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, slide) },
+        popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, slide) },
+        popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, slide) },
+    ) {
         composable(Routes.START) {
             StartScreen(
                 onOpenDance = { nav.navigate(Routes.tanz(it)) },
@@ -92,15 +108,32 @@ fun TanzlexikonNavHost(nav: NavHostController = rememberNavController()) {
                 danceId = entry.arguments!!.getLong("danceId"),
                 onBack = { nav.popBackStack() },
                 onOpenFigure = { nav.navigate(Routes.figur(it)) },
+                onFigureCreated = { nav.navigate(Routes.figur(it, neu = true)) },
             )
         }
-        composable(Routes.FIGUR, arguments = listOf(navArgument("figureId") { type = NavType.LongType })) { entry ->
-            FigurScreen(figureId = entry.arguments!!.getLong("figureId"), onBack = { nav.popBackStack() })
+        composable(
+            Routes.FIGUR,
+            arguments = listOf(
+                navArgument("figureId") { type = NavType.LongType },
+                navArgument("neu") { type = NavType.BoolType; defaultValue = false },
+            ),
+        ) { entry ->
+            FigurScreen(
+                figureId = entry.arguments!!.getLong("figureId"),
+                isNew = entry.arguments!!.getBoolean("neu"),
+                onBack = { nav.popBackStack() },
+                onOpenFigure = { nav.openLinkedFigure(it.id, it.danceId) },
+            )
         }
         composable(Routes.PAPIERKORB) { PapierkorbScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.EINSTELLUNGEN) {
-            EinstellungenScreen(onBack = { nav.popBackStack() }, onTrash = { nav.navigate(Routes.PAPIERKORB) })
+            EinstellungenScreen(
+                onBack = { nav.popBackStack() },
+                onTrash = { nav.navigate(Routes.PAPIERKORB) },
+                onChangelog = { nav.navigate(Routes.VERSIONSVERLAUF) },
+            )
         }
+        composable(Routes.VERSIONSVERLAUF) { VersionsverlaufScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.EMPFANG) {
             // Die Datei wird beim Betreten festgehalten, damit ein späteres Teilen sie nicht austauscht.
             val uri = remember { app.pendingImport.value }
@@ -116,7 +149,7 @@ fun TanzlexikonNavHost(nav: NavHostController = rememberNavController()) {
                     onClose = ::leave,
                     onAdded = { id ->
                         app.pendingImport.value = null
-                        nav.navigate(Routes.figur(id)) { popUpTo(Routes.EMPFANG) { inclusive = true } }
+                        nav.navigate(Routes.figur(id, neu = true)) { popUpTo(Routes.EMPFANG) { inclusive = true } }
                     },
                 )
             }
@@ -132,3 +165,15 @@ fun BackButton(onBack: () -> Unit) {
         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
     }
 }
+
+/**
+ * Sprung über „Siehe auch“: Der Verlauf wird zu Startseite → Tanz der Figur → Figur.
+ * Zurück führt so in den Tanz der gerade gezeigten Figur, nicht durch alle vorher besuchten Figuren.
+ */
+fun NavController.openLinkedFigure(figureId: Long, danceId: Long) {
+    navigate(Routes.tanz(danceId)) { popUpTo(Routes.START) }
+    navigate(Routes.figur(figureId))
+}
+
+/** Dauer eines Bildschirmwechsels. */
+private const val SLIDE_MS = 300

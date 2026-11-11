@@ -9,6 +9,10 @@ import io.github.katzfuss11.tanzlexikon.data.MediaEntity
 import io.github.katzfuss11.tanzlexikon.data.MediaKind
 import io.github.katzfuss11.tanzlexikon.data.Section
 import io.github.katzfuss11.tanzlexikon.lexikon.FigureDetail
+import io.github.katzfuss11.tanzlexikon.lexikon.FigureLinks
+import io.github.katzfuss11.tanzlexikon.lexikon.FigureListItem
+import io.github.katzfuss11.tanzlexikon.lexikon.LinkCandidate
+import io.github.katzfuss11.tanzlexikon.lexikon.LinkSuggestion
 import io.github.katzfuss11.tanzlexikon.lexikon.LexikonRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +33,10 @@ data class FigurDraft(
     val leaderText: String,
     val followerText: String,
     val media: List<MediaEntity>,
+    /** „Siehe auch“, wie es nach dem Speichern sein soll. */
+    val links: FigureLinks = FigureLinks(),
+    /** „Siehe auch“ beim Öffnen des Entwurfs. Gespeichert werden nur die Änderungen dagegen. */
+    val baseLinks: FigureLinks = FigureLinks(),
 )
 
 /** Wohin das nächste aufgenommene oder ausgewählte Medium gehört. */
@@ -48,6 +56,12 @@ data class FigurState(
     @StringRes val error: Int? = null,
     /** Der Entwurf weicht vom gespeicherten Stand ab. */
     val hasChanges: Boolean = false,
+    /** „Siehe auch“ (gespeicherter Stand). */
+    val links: FigureLinks = FigureLinks(),
+    /** Vorschlag, gleichnamige Figuren zu verknüpfen; null = kein Dialog. */
+    val suggestion: LinkSuggestion? = null,
+    /** Figuren und Gruppen, die beim Bearbeiten noch verknüpft werden können. */
+    val linkCandidates: List<LinkCandidate> = emptyList(),
 )
 
 private data class EditState(val draft: FigurDraft? = null, @StringRes val error: Int? = null)
@@ -62,13 +76,23 @@ class FigurViewModel(
     private val saved: SavedStateHandle = SavedStateHandle(),
     /** Für Schreibvorgänge, die auch nach dem Verlassen des Bildschirms fertig werden müssen. */
     private val workScope: CoroutineScope? = null,
+    /** Frisch angelegt oder empfangen: dann einmal Verknüpfen vorschlagen. */
+    isNew: Boolean = false,
 ) : ViewModel() {
     private val edit = MutableStateFlow(EditState(draft = saved.get<String>(KEY_DRAFT)?.let(::decodeDraft)))
+    private val suggestion = MutableStateFlow<LinkSuggestion?>(null)
 
-    val state: StateFlow<FigurState> = combine(repo.observeFigure(figureId), edit) { detail, e ->
+    val state: StateFlow<FigurState> = combine(
+        repo.observeFigure(figureId), edit, repo.observeLinks(figureId), repo.observeLinkCandidates(), suggestion,
+    ) { detail, e, links, all, s ->
+        val shown = (e.draft?.links ?: links).let { l -> (l.otherDances + l.sameDance).map { it.id }.toSet() }
         FigurState(
             detail = detail, editing = e.draft != null, draft = e.draft, error = e.error,
-            hasChanges = e.draft != null && detail != null && e.draft != draftOf(detail),
+            hasChanges = e.draft != null && detail != null && e.draft != draftOf(detail, e.draft.baseLinks),
+            links = links, suggestion = s,
+            linkCandidates = all
+                .map { c -> c.copy(members = c.members.filter { it.id != figureId && it.id !in shown }) }
+                .filter { it.members.isNotEmpty() },
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, FigurState(null, editing = false, draft = null))
 
@@ -76,11 +100,41 @@ class FigurViewModel(
         viewModelScope.launch {
             edit.collect { e -> saved[KEY_DRAFT] = e.draft?.let { json.encodeToString(FigurDraft.serializer(), it) } }
         }
+        if (isNew) viewModelScope.launch { suggestion.value = repo.linkSuggestion(figureId) }
     }
 
     fun startEditing() {
         val d = state.value.detail ?: return
-        edit.value = EditState(draftOf(d))
+        edit.value = EditState(draftOf(d, state.value.links))
+    }
+
+    /** Verknüpft im Entwurf: gleicher Tanz → einzelne Verbindung, anderer Tanz → Gruppe. */
+    fun addLink(target: FigureListItem) = updateDraft { d ->
+        val sameDance = target.danceId == state.value.detail?.figure?.danceId
+        val l = d.links
+        if (target.id == figureId || (l.otherDances + l.sameDance).any { it.id == target.id }) d
+        else if (sameDance) d.copy(links = l.copy(sameDance = l.sameDance + target))
+        else d.copy(links = l.copy(otherDances = l.otherDances + target))
+    }
+
+    /** Verknüpft im Entwurf alle Figuren eines Auswahl-Eintrags, bei einer Gruppe also jede Figur darin. */
+    fun addLinks(candidate: LinkCandidate) = candidate.members.forEach(::addLink)
+
+    /** Löst einen Verweis im Entwurf. */
+    fun removeLink(target: FigureListItem) = updateDraft { d ->
+        d.copy(
+            links = FigureLinks(
+                otherDances = d.links.otherDances.filterNot { it.id == target.id },
+                sameDance = d.links.sameDance.filterNot { it.id == target.id },
+            ),
+        )
+    }
+
+    /** Antwort auf den Vorschlag. Schließen ohne Antwort zählt als „Nicht verknüpfen“. */
+    fun answerSuggestion(link: Boolean) {
+        val s = suggestion.value ?: return
+        suggestion.value = null
+        (workScope ?: viewModelScope).launch { repo.answerSuggestion(figureId, s.candidates.map { it.id }, link) }
     }
 
     fun updateDraft(transform: (FigurDraft) -> FigurDraft) =
@@ -147,7 +201,11 @@ class FigurViewModel(
             list.mapIndexed { i, m -> m.copy(position = i) }
         }
         viewModelScope.launch {
+            // Verweise zuerst: wird zugleich umbenannt, gilt „schon gefragt“ beim Lösen noch für den alten Namen.
+            repo.saveLinkChanges(figureId, from = draft.baseLinks, to = draft.links)
             repo.saveFigure(figureId, draft.name, draft.generalText, draft.leaderText, draft.followerText, media)
+            // Erst nach dem Speichern: passt der Name zu Figuren in anderen Tänzen, einmal fragen.
+            suggestion.value = repo.linkSuggestion(figureId)
             edit.value = EditState()
         }
     }
@@ -164,8 +222,8 @@ class FigurViewModel(
         const val KEY_TARGET = "medienziel"
         val json = Json { ignoreUnknownKeys = true }
 
-        fun draftOf(d: FigureDetail) =
-            FigurDraft(d.figure.name, d.figure.generalText, d.figure.leaderText, d.figure.followerText, d.media)
+        fun draftOf(d: FigureDetail, links: FigureLinks) =
+            FigurDraft(d.figure.name, d.figure.generalText, d.figure.leaderText, d.figure.followerText, d.media, links, baseLinks = links)
 
         fun decodeDraft(text: String): FigurDraft? =
             runCatching { json.decodeFromString(FigurDraft.serializer(), text) }.getOrNull()

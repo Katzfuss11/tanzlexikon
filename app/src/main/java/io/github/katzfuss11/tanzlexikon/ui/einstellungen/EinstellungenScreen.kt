@@ -58,6 +58,7 @@ import java.util.Locale
 fun EinstellungenScreen(
     onBack: () -> Unit,
     onTrash: () -> Unit,
+    onChangelog: () -> Unit,
     vm: EinstellungenViewModel = appViewModel { EinstellungenViewModel(it.backupService, it.contentResolver, it.appScope) },
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -127,6 +128,11 @@ fun EinstellungenScreen(
 
             SectionTitle(stringResource(R.string.settings_about))
             ListItem(headlineContent = { Text(stringResource(R.string.installed_version, BuildConfig.VERSION_NAME)) })
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.changelog)) },
+                supportingContent = { Text(stringResource(R.string.changelog_hint)) },
+                modifier = Modifier.clickable(onClick = onChangelog),
+            )
             val app = LocalContext.current.applicationContext as TanzlexikonApp
             ListItem(
                 headlineContent = { Text(stringResource(R.string.check_updates)) },

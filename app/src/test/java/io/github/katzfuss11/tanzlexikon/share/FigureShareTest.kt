@@ -89,6 +89,17 @@ class FigureShareTest {
         assertEquals(video.size.toLong(), media[0].sizeBytes)
     }
 
+    @Test fun shareAsFile_manifestHasNoLinkData() = runBlocking {
+        val d = detail().let { it.copy(figure = it.figure.copy(linkGroup = 5, askedName = "fächer")) }
+        val (manifest, _) = read(share { true }.writeFigureFile(d, shrink = false) { _, _ -> })
+
+        val f = manifest.categories[0].dances[0].figures[0]
+        assertEquals(null, f.linkGroup)
+        assertEquals(null, f.key)
+        assertEquals(null, f.askedName)
+        assertEquals(emptyList<Any>(), manifest.links)
+    }
+
     @Test fun writeFigureFile_withoutShrink_packsOriginalUntouched() = runBlocking {
         val d = detail()
         val (manifest, files) = read(share { true }.writeFigureFile(d, shrink = false) { _, _ -> })
