@@ -22,11 +22,12 @@ abstract class TanzDatabase : RoomDatabase() {
     companion object {
         const val FILE_NAME = "tanzlexikon.db"
 
-        fun build(context: Context, inMemory: Boolean = false): TanzDatabase {
+        /** [fileName] nur für Tests, die eine eigene Datei brauchen. */
+        fun build(context: Context, inMemory: Boolean = false, fileName: String = FILE_NAME): TanzDatabase {
             val builder = if (inMemory) {
                 Room.inMemoryDatabaseBuilder(context, TanzDatabase::class.java)
             } else {
-                Room.databaseBuilder(context, TanzDatabase::class.java, FILE_NAME)
+                Room.databaseBuilder(context, TanzDatabase::class.java, fileName)
             }
             return builder.addCallback(SeedCallback).build()
         }

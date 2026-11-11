@@ -24,10 +24,11 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 class MigrationTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val dbFile = context.getDatabasePath(TanzDatabase.FILE_NAME)
+    private val fileName = "migration-test.db"
+    private val dbFile = context.getDatabasePath(fileName)
 
     @After fun tearDown() {
-        context.deleteDatabase(TanzDatabase.FILE_NAME)
+        context.deleteDatabase(fileName)
     }
 
     private fun createVersion1Database() {
@@ -61,7 +62,7 @@ class MigrationTest {
     @Test fun migrate1To2_keepsAllData_noLinks() = runBlocking {
         createVersion1Database()
 
-        val db = TanzDatabase.build(context)
+        val db = TanzDatabase.build(context, fileName = fileName)
         try {
             val figure = db.dao().figure(1)!!
             assertEquals("Fächer", figure.name)
