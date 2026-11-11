@@ -16,11 +16,10 @@
     <string name="unlink">Verknüpfung lösen</string>
     <string name="search_figure">Figur suchen</string>
     <string name="no_matching_figures">Keine passende Figur.</string>
-    <string name="link_suggestion_title">%1$s gibt es auch in %2$s.</string>
+    <string name="link_suggestion_intro">Diese Figur gibt es auch in:</string>
     <string name="link_suggestion_text">Verknüpfen, damit du zwischen ihnen springen kannst?</string>
     <string name="link">Verknüpfen</string>
     <string name="dont_link">Nicht verknüpfen</string>
-    <string name="and">und</string>
     <string name="save">Speichern</string>
     <string name="back">Zurück</string>
     <string name="more">Mehr</string>

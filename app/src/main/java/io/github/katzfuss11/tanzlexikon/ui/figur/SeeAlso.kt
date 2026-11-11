@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -142,17 +143,41 @@ fun LinkPickerDialog(candidates: List<FigureListItem>, onPick: (FigureListItem) 
     )
 }
 
-/** Vorschlag, gleichnamige Figuren aus anderen Tänzen zu verknüpfen. Schließen zählt als „Nicht verknüpfen“. */
+/**
+ * Vorschlag, gleichnamige Figuren aus anderen Tänzen zu verknüpfen. Die Tänze stehen als Liste,
+ * die höchstens drei Zeilen hoch ist und darüber hinaus scrollt. Schließen zählt als „Nicht verknüpfen“.
+ */
 @Composable
 fun LinkSuggestionDialog(suggestion: LinkSuggestion, onAnswer: (Boolean) -> Unit) {
     val dances = suggestion.candidates.map { it.danceName }.distinct()
-    val list = if (dances.size == 1) dances[0]
-    else dances.dropLast(1).joinToString(", ") + " " + stringResource(R.string.and) + " " + dances.last()
     AlertDialog(
         onDismissRequest = { onAnswer(false) },
-        title = { Text(stringResource(R.string.link_suggestion_title, suggestion.figureName, list)) },
-        text = { Text(stringResource(R.string.link_suggestion_text)) },
+        title = { Text(suggestion.figureName) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.link_suggestion_intro))
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    LazyColumn(Modifier.heightIn(max = SUGGESTION_ROW * 3).padding(horizontal = 12.dp)) {
+                        items(dances) { dance ->
+                            Text(
+                                "• $dance",
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.heightIn(min = SUGGESTION_ROW).wrapContentHeight(),
+                            )
+                        }
+                    }
+                }
+                Text(stringResource(R.string.link_suggestion_text))
+            }
+        },
         confirmButton = { TextButton(onClick = { onAnswer(true) }) { Text(stringResource(R.string.link)) } },
         dismissButton = { TextButton(onClick = { onAnswer(false) }) { Text(stringResource(R.string.dont_link)) } },
     )
 }
+
+/** Höhe einer Zeile in der Tanzliste des Vorschlags. */
+private val SUGGESTION_ROW = 36.dp
