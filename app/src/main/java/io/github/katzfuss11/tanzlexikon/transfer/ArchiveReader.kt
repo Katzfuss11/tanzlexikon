@@ -7,6 +7,11 @@ import java.io.InputStream
 import java.util.zip.ZipInputStream
 
 class ArchiveReader {
+    private companion object {
+        /** Eine echte Beschreibung ist wenige hundert KB groß; 10 MB lassen viel Luft. */
+        const val MAX_MANIFEST_BYTES = 10 * 1024 * 1024
+    }
+
     /**
      * Liest ein Archiv: erst die Beschreibung, dann jede Datei über [onFile].
      * Wirft [ArchiveException], wenn die Datei kein Tanzlexikon-Archiv ist, aus einer neueren
@@ -18,7 +23,7 @@ class ArchiveReader {
             val first = zip.nextEntry
             if (first == null || first.name != MANIFEST_ENTRY) throw ArchiveException(ArchiveError.NOT_TANZLEXIKON)
 
-            val text = zip.readBytes().toString(Charsets.UTF_8)
+            val text = readLimited(zip, MAX_MANIFEST_BYTES).toString(Charsets.UTF_8)
             val version = archiveJson.parseToJsonElement(text).let {
                 (it as? kotlinx.serialization.json.JsonObject)?.get("formatVersion")
                     ?.let { v -> (v as? kotlinx.serialization.json.JsonPrimitive)?.content?.toIntOrNull() }
@@ -51,6 +56,18 @@ class ArchiveReader {
             throw ArchiveException(ArchiveError.CORRUPT, e)
         } catch (e: IllegalArgumentException) {
             throw ArchiveException(ArchiveError.CORRUPT, e)
+        }
+    }
+
+    /** Liest höchstens [limit] Bytes; eine größere Beschreibung gilt als beschädigt (Schutz vor Speicherüberlauf). */
+    private fun readLimited(input: InputStream, limit: Int): ByteArray {
+        val out = java.io.ByteArrayOutputStream()
+        val buffer = ByteArray(64 * 1024)
+        while (true) {
+            val n = input.read(buffer)
+            if (n < 0) return out.toByteArray()
+            if (out.size() + n > limit) throw ArchiveException(ArchiveError.CORRUPT)
+            out.write(buffer, 0, n)
         }
     }
 

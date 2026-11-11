@@ -7,6 +7,11 @@ import android.view.MotionEvent
 import android.view.ViewConfiguration
 import android.widget.FrameLayout
 import kotlin.math.abs
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.compose.runtime.remember
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -54,6 +59,9 @@ fun MediaViewer(media: MediaEntity, onClose: () -> Unit) {
                     modifier = Modifier.fillMaxSize(),
                 )
             } else {
+                // Geht die App in den Hintergrund, hält das Video an.
+                val playerRef = remember { arrayOfNulls<ExoPlayer>(1) }
+                LifecycleEventEffect(Lifecycle.Event.ON_STOP) { playerRef[0]?.pause() }
                 AndroidView(
                     modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                     factory = { context ->
@@ -61,11 +69,16 @@ fun MediaViewer(media: MediaEntity, onClose: () -> Unit) {
                             // Die Sprungknöpfe springen in beide Richtungen 5 Sekunden.
                             .setSeekBackIncrementMs(5_000)
                             .setSeekForwardIncrementMs(5_000)
+                            // Andere Wiedergaben (Musik, Anruf) bekommen Vorrang bzw. werden angehalten.
+                            .setAudioAttributes(
+                                AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(),
+                                /* handleAudioFocus = */ true,
+                            )
                             .build().apply {
                             setMediaItem(MediaItem.fromUri(uri))
                             prepare()
                             playWhenReady = true
-                        }
+                        }.also { playerRef[0] = it }
                         val playerView = PlayerView(context).apply {
                             this.player = player
                             // Beim Ziehen am Zeitregler läuft das Bild flüssig mit, damit man

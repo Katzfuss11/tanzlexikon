@@ -115,6 +115,19 @@ class ArchiveRoundTripTest {
         }
     }
 
+    @Test fun read_hugeManifest_throwsCorrupt_withoutReadingItAll() {
+        // Eine präparierte Datei mit riesiger Beschreibung darf die App nicht zum Absturz bringen.
+        val zip = ByteArrayOutputStream().also { out ->
+            ZipOutputStream(out).use { z ->
+                z.putNextEntry(ZipEntry(MANIFEST_ENTRY))
+                val huge = manifest().copy(appVersion = "x".repeat(11 * 1024 * 1024))
+                z.write(archiveJson.encodeToString(ArchiveManifest.serializer(), huge).toByteArray())
+                z.closeEntry()
+            }
+        }.toByteArray()
+        expectError(ArchiveError.CORRUPT, zip)
+    }
+
     @Test fun read_formatVersion2_throwsNewerFormat() {
         expectError(ArchiveError.NEWER_FORMAT, write(manifest(version = 2)))
     }
