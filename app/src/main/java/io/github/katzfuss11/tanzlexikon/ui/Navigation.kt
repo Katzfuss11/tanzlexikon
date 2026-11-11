@@ -37,14 +37,15 @@ import io.github.katzfuss11.tanzlexikon.ui.suche.SucheScreen
 object Routes {
     const val START = "start"
     const val TANZ = "tanz/{danceId}"
-    const val FIGUR = "figur/{figureId}"
+    const val FIGUR = "figur/{figureId}?neu={neu}"
     const val SUCHE = "suche"
     const val PAPIERKORB = "papierkorb"
     const val EINSTELLUNGEN = "einstellungen"
     const val EMPFANG = "empfang"
 
     fun tanz(danceId: Long) = "tanz/$danceId"
-    fun figur(figureId: Long) = "figur/$figureId"
+    /** [neu]: frisch angelegt oder empfangen, dann wird einmal Verknüpfen vorgeschlagen. */
+    fun figur(figureId: Long, neu: Boolean = false) = "figur/$figureId?neu=$neu"
 }
 
 /**
@@ -92,10 +93,22 @@ fun TanzlexikonNavHost(nav: NavHostController = rememberNavController()) {
                 danceId = entry.arguments!!.getLong("danceId"),
                 onBack = { nav.popBackStack() },
                 onOpenFigure = { nav.navigate(Routes.figur(it)) },
+                onFigureCreated = { nav.navigate(Routes.figur(it, neu = true)) },
             )
         }
-        composable(Routes.FIGUR, arguments = listOf(navArgument("figureId") { type = NavType.LongType })) { entry ->
-            FigurScreen(figureId = entry.arguments!!.getLong("figureId"), onBack = { nav.popBackStack() })
+        composable(
+            Routes.FIGUR,
+            arguments = listOf(
+                navArgument("figureId") { type = NavType.LongType },
+                navArgument("neu") { type = NavType.BoolType; defaultValue = false },
+            ),
+        ) { entry ->
+            FigurScreen(
+                figureId = entry.arguments!!.getLong("figureId"),
+                isNew = entry.arguments!!.getBoolean("neu"),
+                onBack = { nav.popBackStack() },
+                onOpenFigure = { nav.navigate(Routes.figur(it)) },
+            )
         }
         composable(Routes.PAPIERKORB) { PapierkorbScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.EINSTELLUNGEN) {
@@ -116,7 +129,7 @@ fun TanzlexikonNavHost(nav: NavHostController = rememberNavController()) {
                     onClose = ::leave,
                     onAdded = { id ->
                         app.pendingImport.value = null
-                        nav.navigate(Routes.figur(id)) { popUpTo(Routes.EMPFANG) { inclusive = true } }
+                        nav.navigate(Routes.figur(id, neu = true)) { popUpTo(Routes.EMPFANG) { inclusive = true } }
                     },
                 )
             }

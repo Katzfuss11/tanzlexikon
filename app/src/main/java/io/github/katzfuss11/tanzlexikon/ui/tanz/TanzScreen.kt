@@ -68,6 +68,7 @@ fun TanzScreen(
     danceId: Long,
     onBack: () -> Unit,
     onOpenFigure: (Long) -> Unit,
+    onFigureCreated: (Long) -> Unit = onOpenFigure,
     vm: TanzViewModel = appViewModel(key = "tanz$danceId") { TanzViewModel(it.repository, danceId) },
 ) {
     val name by vm.danceName.collectAsStateWithLifecycle()
@@ -116,7 +117,7 @@ fun TanzScreen(
             onDismiss = { adding = false },
             onConfirm = { figureName ->
                 adding = false
-                vm.addFigure(figureName, onOpenFigure)
+                vm.addFigure(figureName, onFigureCreated)
             },
         )
     }

@@ -74,8 +74,10 @@ import io.github.katzfuss11.tanzlexikon.ui.appViewModel
 fun FigurScreen(
     figureId: Long,
     onBack: () -> Unit,
+    onOpenFigure: (Long) -> Unit,
+    isNew: Boolean = false,
     vm: FigurViewModel = appViewModel(key = "figur$figureId") {
-        FigurViewModel(it.repository, figureId, createSavedStateHandle(), it.appScope)
+        FigurViewModel(it.repository, figureId, createSavedStateHandle(), it.appScope, isNew)
     },
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -211,6 +213,17 @@ fun FigurScreen(
     // Wohin das nächste ausgewählte Medium gehört, merkt sich das ViewModel (übersteht auch die Kamera).
     var youtubeFor by rememberSaveable { mutableStateOf<Section?>(null) }
     val adder = rememberMediaAdder { picked -> vm.onMediaPicked(picked) }
+    // Verknüpfen: Auswahl beim Bearbeiten und Vorschlag nach Anlegen oder Speichern.
+    var pickingLink by rememberSaveable { mutableStateOf(false) }
+    if (pickingLink && state.editing) {
+        LinkPickerDialog(
+            candidates = state.linkCandidates,
+            onPick = { vm.addLink(it); pickingLink = false },
+            onDismiss = { pickingLink = false },
+        )
+    }
+    state.suggestion?.let { s -> LinkSuggestionDialog(s, onAnswer = vm::answerSuggestion) }
+
     youtubeFor?.let { section ->
         YouTubeDialog(
             onDismiss = { youtubeFor = null },
@@ -305,6 +318,10 @@ fun FigurScreen(
                         )
                     }
                 }
+                SeeAlsoSection(
+                    links = draft.links, editing = true,
+                    onOpen = {}, onRemove = vm::removeLink, onAdd = { pickingLink = true },
+                )
             } else if (detail != null) {
                 val f = detail.figure
                 val texts = mapOf(Section.GENERAL to f.generalText, Section.LEADER to f.leaderText, Section.FOLLOWER to f.followerText)
@@ -319,6 +336,10 @@ fun FigurScreen(
                         MediaSection(media = detail.media.filter { it.section == section }, editing = false)
                     }
                 }
+                SeeAlsoSection(
+                    links = state.links, editing = false,
+                    onOpen = { onOpenFigure(it.id) }, onRemove = {}, onAdd = {},
+                )
             }
             Spacer(Modifier.height(24.dp))
         }

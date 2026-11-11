@@ -187,4 +187,107 @@ class FigurViewModelTest {
         val saved = await { vm.state.first { !it.editing && it.detail!!.media.isNotEmpty() } }.detail!!.media
         assertEquals(listOf(20L), saved.map { it.sizeBytes })
     }
+
+    // ---- Siehe auch ----
+
+    private suspend fun danceId(name: String) = repo.observeStart().first().flatMap { it.dances }.single { it.name == name }.id
+    private fun fig(dance: String, name: String) = await { repo.addFigure(danceId(dance), name) }
+    private fun item(id: Long) = await { repo.observeAllFigures().first().single { it.id == id } }
+
+    @Test fun seeAlso_showsLinksFromRepository() {
+        val s = fig("Salsa", "Fächer")
+        await { repo.answerSuggestion(figureId, listOf(s), link = true) }
+
+        val links = await { vm.state.first { it.links.otherDances.isNotEmpty() } }.links
+        assertEquals(listOf("Salsa"), links.otherDances.map { it.danceName })
+    }
+
+    @Test fun editLinks_onlyAfterSave_cancelDiscards() {
+        val h = item(fig("Rumba", "Hockeystick"))
+
+        vm.startEditing()
+        vm.addLink(h)
+        assertTrue(await { repo.observeLinks(figureId).first() }.sameDance.isEmpty())
+        vm.cancelEditing()
+        assertTrue(vm.state.value.links.sameDance.isEmpty())
+
+        vm.startEditing()
+        vm.addLink(h)
+        vm.save()
+        val s = await { vm.state.first { !it.editing && it.links.sameDance.isNotEmpty() } }
+        assertEquals(listOf(h.id), s.links.sameDance.map { it.id })
+    }
+
+    @Test fun removeLink_marksHasChanges() {
+        val h = item(fig("Rumba", "Hockeystick"))
+        await { repo.saveLinks(figureId, emptyList(), listOf(h.id)) }
+        await { vm.state.first { it.links.sameDance.isNotEmpty() } }
+
+        vm.startEditing()
+        assertFalse(vm.state.value.hasChanges)
+        vm.removeLink(h)
+        assertTrue(vm.state.value.hasChanges)
+    }
+
+    @Test fun draftLinks_surviveRecreation() {
+        val h = item(fig("Rumba", "Hockeystick"))
+        val saved = SavedStateHandle()
+        val first = FigurViewModel(repo, figureId, saved)
+        await { first.state.first { it.detail != null } }
+        first.startEditing()
+        first.addLink(h)
+
+        val second = recreated(saved)
+
+        assertEquals(listOf(h.id), second.state.value.draft!!.links.sameDance.map { it.id })
+    }
+
+    @Test fun linkCandidates_excludeSelfAndShown() {
+        val h = item(fig("Rumba", "Hockeystick"))
+        val n = item(fig("Salsa", "New York"))
+        vm.startEditing()
+        val before = await { vm.state.first { it.linkCandidates.size >= 2 } }.linkCandidates.map { it.id }
+        assertTrue(h.id in before && n.id in before)
+        assertFalse(figureId in before)
+
+        vm.addLink(h)
+
+        val after = vm.state.value.linkCandidates.map { it.id }
+        assertFalse(h.id in after)
+        assertTrue(n.id in after)
+    }
+
+    @Test fun save_oldFigure_firstTime_offersSuggestion_once() {
+        fig("Salsa", "Fächer")
+
+        vm.startEditing()
+        vm.save()
+        assertEquals(1, await { vm.state.first { !it.editing && it.suggestion != null } }.suggestion!!.candidates.size)
+        vm.answerSuggestion(link = false)
+        await { vm.state.first { it.suggestion == null } }
+
+        vm.startEditing()
+        vm.save()
+        assertNull(await { vm.state.first { !it.editing } }.suggestion)
+    }
+
+    @Test fun newFigure_offersSuggestionOnOpen() {
+        fig("Salsa", "Neu")
+        val r = fig("Rumba", "Neu")
+
+        val neu = FigurViewModel(repo, r, isNew = true)
+
+        assertEquals(1, await { neu.state.first { it.suggestion != null } }.suggestion!!.candidates.size)
+    }
+
+    @Test fun answerYes_linksAndClearsSuggestion() {
+        fig("Salsa", "Neu")
+        val neu = FigurViewModel(repo, fig("Rumba", "Neu"), isNew = true)
+        await { neu.state.first { it.suggestion != null } }
+
+        neu.answerSuggestion(link = true)
+
+        val s = await { neu.state.first { it.suggestion == null && it.links.otherDances.isNotEmpty() } }
+        assertEquals(listOf("Salsa"), s.links.otherDances.map { it.danceName })
+    }
 }
