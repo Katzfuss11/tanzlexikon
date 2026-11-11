@@ -39,6 +39,7 @@ data class FigureSummaryRef(val figureId: Long, val figureName: String, val danc
 data class ArchiveSnapshot(
     val categories: List<io.github.katzfuss11.tanzlexikon.transfer.ArchCategory>,
     val files: List<Pair<String, MediaEntity>>,
+    val links: List<io.github.katzfuss11.tanzlexikon.transfer.ArchLink> = emptyList(),
 )
 
 /** Platzhalter-Adresse für ein Medium, dessen Datei schon beim Export fehlte. */

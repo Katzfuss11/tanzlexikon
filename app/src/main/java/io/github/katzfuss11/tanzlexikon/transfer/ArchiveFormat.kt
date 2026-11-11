@@ -22,6 +22,8 @@ data class ArchiveManifest(
     val kind: ArchiveKind,
     val appVersion: String,
     val categories: List<ArchCategory>,
+    /** Direkte Verbindungen zwischen Figuren (über [ArchFigure.key]). Nur in Sicherungen. */
+    val links: List<ArchLink> = emptyList(),
 )
 
 @Serializable
@@ -38,6 +40,12 @@ data class ArchFigure(
     val leaderText: String,
     val followerText: String,
     val media: List<ArchMedia>,
+    /** Nummer der Figur in dieser Sicherung, für [ArchiveManifest.links]. Nur in Sicherungen. */
+    val key: Int? = null,
+    /** Gruppe „dieselbe Figur in anderen Tänzen“ (Nummer nur innerhalb dieser Sicherung). */
+    val linkGroup: Int? = null,
+    /** Name, für den schon Verknüpfen vorgeschlagen wurde. */
+    val askedName: String? = null,
 )
 
 /**
@@ -72,3 +80,7 @@ internal val archiveJson = Json {
     ignoreUnknownKeys = true
     encodeDefaults = true
 }
+
+/** Eine direkte Verbindung zwischen den Figuren mit den Schlüsseln [a] und [b]. */
+@Serializable
+data class ArchLink(val a: Int, val b: Int)

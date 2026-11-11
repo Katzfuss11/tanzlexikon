@@ -48,7 +48,7 @@ class BackupService(
     suspend fun export(target: OutputStream, onProgress: (Long, Long) -> Unit) = withContext(Dispatchers.IO) {
         val snap = repository.snapshot(mediaChecker::isAvailable)
         val files = snap.files.map { (path, m) -> ArchiveFile(path, sizeOf(m)) { open(m) } }
-        val manifest = ArchiveManifest(kind = ArchiveKind.BACKUP, appVersion = BuildConfig.VERSION_NAME, categories = snap.categories)
+        val manifest = ArchiveManifest(kind = ArchiveKind.BACKUP, appVersion = BuildConfig.VERSION_NAME, categories = snap.categories, links = snap.links)
         ArchiveWriter().write(target, manifest, files, onProgress)
     }
 

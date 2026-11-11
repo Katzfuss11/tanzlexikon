@@ -6,6 +6,7 @@ import io.github.katzfuss11.tanzlexikon.data.MediaEntity
 import io.github.katzfuss11.tanzlexikon.data.MediaKind
 import io.github.katzfuss11.tanzlexikon.data.Section
 import io.github.katzfuss11.tanzlexikon.data.TanzDatabase
+import io.github.katzfuss11.tanzlexikon.lexikon.FigureLinks
 import io.github.katzfuss11.tanzlexikon.lexikon.LexikonRepository
 import io.github.katzfuss11.tanzlexikon.media.GalleryWriter
 import io.github.katzfuss11.tanzlexikon.media.MediaChecker
@@ -162,6 +163,54 @@ class BackupServiceTest {
 
         assertEquals(ImportOutcome.NotEnoughSpace(5000), outcome)
         assertEquals(listOf("Alt"), repo.observeFigures(rumba(repo)).first().map { it.name })
+    }
+
+    @Test fun exportThenImport_keepsGroupsLinksAndAskedName() = runTest {
+        val source = newRepo()
+        suspend fun fig(dance: String, name: String) =
+            source.addFigure(source.observeStart().first().flatMap { it.dances }.single { it.name == dance }.id, name)
+        val s = fig("Salsa", "Crossbody Lead")
+        val r = fig("Rumba", "Crossbody Lead")
+        source.answerSuggestion(r, listOf(s), link = true)
+        val f = fig("Rumba", "Fächer")
+        val h = fig("Rumba", "Hockeystick")
+        source.saveLinks(f, emptyList(), listOf(h))
+        val solo = fig("Jive", "Kick")
+        source.answerSuggestion(solo, listOf(fig("Samba", "Kick")), link = false)
+        source.trashFigure(fig("Rumba", "Weg"), 1L)
+        val bytes = export(source)
+
+        val target = newRepo()
+        assertTrue(service(target).import({ ByteArrayInputStream(bytes) }) { _, _ -> } is ImportOutcome.Success)
+
+        val byName = target.observeAllFigures().first().groupBy { it.name to it.danceName }
+        fun id(name: String, dance: String) = byName.getValue(name to dance).single().id
+        suspend fun links(id: Long) = target.observeLinks(id).first()
+        assertEquals(listOf("Salsa"), links(id("Crossbody Lead", "Rumba")).otherDances.map { it.danceName })
+        assertEquals(listOf("Rumba"), links(id("Crossbody Lead", "Salsa")).otherDances.map { it.danceName })
+        assertEquals(listOf("Hockeystick"), links(id("Fächer", "Rumba")).sameDance.map { it.name })
+        assertEquals(null, target.linkSuggestion(id("Kick", "Jive")))
+        assertEquals(null, target.linkSuggestion(id("Kick", "Samba")))
+    }
+
+    @Test fun import_oldBackupWithoutLinkFields_works() = runTest {
+        // So sah eine Sicherung aus v0.1.2 aus: ohne key, linkGroup, askedName und links.
+        val json = """{"formatVersion":1,"kind":"BACKUP","appVersion":"0.1.2","categories":[{"name":"Latein","position":0,
+            "dances":[{"name":"Rumba","position":0,"figures":[{"name":"Fächer","position":0,"generalText":"Grundidee",
+            "leaderText":"","followerText":"","media":[]}]}]}]}"""
+        val zip = ByteArrayOutputStream().also { out ->
+            java.util.zip.ZipOutputStream(out).use { z ->
+                z.putNextEntry(java.util.zip.ZipEntry(MANIFEST_ENTRY)); z.write(json.toByteArray()); z.closeEntry()
+            }
+        }.toByteArray()
+
+        val repo = newRepo()
+        val outcome = service(repo).import({ ByteArrayInputStream(zip) }) { _, _ -> }
+
+        assertEquals(ImportOutcome.Success(1, 0), outcome)
+        val fig = repo.observeAllFigures().first().single()
+        assertEquals("Fächer", fig.name)
+        assertEquals(FigureLinks(), repo.observeLinks(fig.id).first())
     }
 
     @Test fun hasEnoughSpace_requires50MbMargin() {

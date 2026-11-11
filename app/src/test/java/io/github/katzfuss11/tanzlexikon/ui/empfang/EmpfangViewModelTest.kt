@@ -65,7 +65,10 @@ class EmpfangViewModelTest {
 
     private val video = ByteArray(3000) { (it % 97).toByte() }
 
-    private fun archive(kind: ArchiveKind, category: String, dance: String, figure: String): ByteArray {
+    private fun archive(
+        kind: ArchiveKind, category: String, dance: String, figure: String,
+        linkGroup: Int? = null, askedName: String? = null,
+    ): ByteArray {
         val manifest = ArchiveManifest(
             kind = kind, appVersion = "0.1.0",
             categories = listOf(
@@ -76,6 +79,7 @@ class EmpfangViewModelTest {
                             ArchMedia(Section.GENERAL, MediaKind.VIDEO, 0, file = "media/1.mp4", displayName = "kreisel.mp4", mimeType = "video/mp4", sizeBytes = video.size.toLong()),
                             ArchMedia(Section.LEADER, MediaKind.YOUTUBE, 0, youtubeUrl = "https://youtu.be/dQw4w9WgXcQ"),
                         ),
+                        linkGroup = linkGroup, askedName = askedName,
                     ),
                 )))),
             ),
@@ -136,6 +140,16 @@ class EmpfangViewModelTest {
         screenClosed.countDown()
 
         assertEquals(listOf("Kreisel"), await { repo.observeFigures(rumba).first { it.isNotEmpty() } }.map { it.name })
+    }
+
+    @Test fun empfang_addedFigure_hasNoGroupAndIsNotAsked() {
+        val vm = viewModel(archive(ArchiveKind.FIGURE, "Latein", "Rumba", "Kreisel", linkGroup = 3, askedName = "kreisel"))
+        vm.add()
+
+        val id = await { vm.state.first { it.addedFigureId != null } }.addedFigureId!!
+        val figure = await { db.dao().figure(id) }!!
+        assertNull(figure.linkGroup)
+        assertNull(figure.askedName)
     }
 
     @Test fun empfang_duplicateName_flagsDuplicate_addStillCreatesSecondFigure() {

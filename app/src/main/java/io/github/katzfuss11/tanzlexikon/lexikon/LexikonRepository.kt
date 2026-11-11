@@ -11,6 +11,7 @@ import io.github.katzfuss11.tanzlexikon.data.MediaKind
 import io.github.katzfuss11.tanzlexikon.transfer.ArchCategory
 import io.github.katzfuss11.tanzlexikon.transfer.ArchDance
 import io.github.katzfuss11.tanzlexikon.transfer.ArchFigure
+import io.github.katzfuss11.tanzlexikon.transfer.ArchLink
 import io.github.katzfuss11.tanzlexikon.transfer.ArchMedia
 import io.github.katzfuss11.tanzlexikon.transfer.ArchiveManifest
 import io.github.katzfuss11.tanzlexikon.data.TanzDatabase
@@ -148,10 +149,20 @@ class LexikonRepository(private val db: TanzDatabase) {
      */
     suspend fun snapshot(isAvailable: (MediaEntity) -> Boolean): ArchiveSnapshot = db.withTransaction {
         val files = mutableListOf<Pair<String, MediaEntity>>()
+        // Figuren bekommen Nummern 1..n, Gruppen werden auf 1..m umnummeriert (nur innerhalb der Sicherung).
+        val keys = mutableMapOf<Long, Int>()
+        val groups = mutableMapOf<Long, Int>()
         val categories = dao.allCategories().map { c ->
             ArchCategory(c.name, c.position, dao.dancesOf(c.id).map { d ->
                 ArchDance(d.name, d.position, dao.activeFiguresOf(d.id).map { f ->
-                    ArchFigure(f.name, f.position, f.generalText, f.leaderText, f.followerText, dao.mediaOf(f.id).map { m ->
+                    val key = keys.size + 1
+                    keys[f.id] = key
+                    ArchFigure(
+                        f.name, f.position, f.generalText, f.leaderText, f.followerText,
+                        key = key,
+                        linkGroup = f.linkGroup?.let { groups.getOrPut(it) { groups.size + 1 } },
+                        askedName = f.askedName,
+                        media = dao.mediaOf(f.id).map { m ->
                         val path = if (m.kind != MediaKind.YOUTUBE && isAvailable(m)) {
                             "media/${files.size + 1}.${fileExtension(m)}".also { files += it to m }
                         } else {
@@ -162,11 +173,17 @@ class LexikonRepository(private val db: TanzDatabase) {
                             youtubeUrl = m.uri.takeIf { m.kind == MediaKind.YOUTUBE },
                             file = path, displayName = m.displayName, mimeType = m.mimeType, sizeBytes = m.sizeBytes,
                         )
-                    })
+                    },
+                    )
                 })
             })
         }
-        ArchiveSnapshot(categories, files)
+        val links = dao.allFigureLinks().mapNotNull { l ->
+            val a = keys[l.figureA] ?: return@mapNotNull null
+            val b = keys[l.figureB] ?: return@mapNotNull null
+            ArchLink(a, b)
+        }
+        ArchiveSnapshot(categories, files, links)
     }
 
     /** Ersetzt den kompletten Bestand (auch den Papierkorb) in einer Transaktion. */
@@ -175,12 +192,26 @@ class LexikonRepository(private val db: TanzDatabase) {
         dao.deleteAllFigures()
         dao.deleteAllDances()
         dao.deleteAllCategories()
+        // Verweise aus der Sicherung übernehmen: Gruppen bekommen neue Nummern, Verbindungen laufen über key.
+        val ids = mutableMapOf<Int, Long>()
+        val groups = mutableMapOf<Int, Long>()
+        var nextGroup = 1L
         manifest.categories.forEach { c ->
             val categoryId = dao.insertCategory(CategoryEntity(name = c.name, position = c.position))
             c.dances.forEach { d ->
                 val danceId = dao.insertDance(DanceEntity(categoryId = categoryId, name = d.name, position = d.position))
-                d.figures.forEach { f -> insertArchFigure(danceId, f, f.position, uriFor) }
+                d.figures.forEach { f ->
+                    val id = insertArchFigure(danceId, f, f.position, uriFor)
+                    f.key?.let { ids[it] = id }
+                    f.linkGroup?.let { g -> dao.setLinkGroup(id, groups.getOrPut(g) { nextGroup++ }) }
+                    f.askedName?.let { dao.setAskedName(id, it) }
+                }
             }
+        }
+        manifest.links.forEach { l ->
+            val a = ids[l.a] ?: return@forEach
+            val b = ids[l.b] ?: return@forEach
+            if (a != b) dao.insertFigureLink(FigureLinkEntity(minOf(a, b), maxOf(a, b)))
         }
     }
 
