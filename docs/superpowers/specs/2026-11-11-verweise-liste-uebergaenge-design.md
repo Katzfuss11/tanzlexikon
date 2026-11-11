@@ -1,4 +1,4 @@
-# Tanzlexikon – Verweise, Liste aller Figuren, Übergänge
+# Tanzlexikon – Siehe auch, Liste aller Figuren, Übergänge
 
 Stand: 11.11.2026, aufbauend auf v0.1.2 (`main`). Grundlage: [2026-11-08-tanzlexikon-design.md](2026-11-08-tanzlexikon-design.md). Was dort steht, gilt weiter, wenn hier nichts anderes steht.
 
@@ -6,19 +6,20 @@ Stand: 11.11.2026, aufbauend auf v0.1.2 (`main`). Grundlage: [2026-11-08-tanzlex
 
 Viele Figuren kommen in mehreren Tänzen vor, zum Beispiel „Crossbody Lead“ in Salsa, Rumba und Cha-Cha-Cha. Der Autor will:
 
-1. **Von einer Figur zur gleichen Figur in einem anderen Tanz springen** (Verweise).
+1. **Von einer Figur zu verwandten Figuren springen** (Verweise, angezeigt als „Siehe auch“): zur gleichen Figur in einem anderen Tanz, aber auch zu Figuren, die ähnlich sind oder aufeinander aufbauen, auch im selben Tanz.
 2. **Einen Überblick über alle Figuren bekommen, nach Namen sortiert.** So sieht er, welche Figuren in mehreren Tänzen vorkommen, kann sie einzeln anwählen und Lücken ergänzen.
 3. **Beim Navigieren sehen, wohin es geht:** Beim Hineingehen gleitet der Bildschirm nach links weg.
 
 ## Ziele
 
-- Verweise zwischen gleichnamigen Figuren verschiedener Tänze, die nur mit Zustimmung des Autors entstehen.
+- Verweise zwischen Figuren, die nur mit Zustimmung des Autors entstehen: vorgeschlagen bei gleichnamigen Figuren in anderen Tänzen, außerdem jederzeit von Hand zu beliebigen Figuren.
 - Eine zweite Ansicht der Startseite, „Alle Figuren“, umschaltbar mit der heutigen Ansicht „Nach Tanz“.
 - Seitliche Übergänge zwischen allen Bildschirmen.
 
 ## Nicht-Ziele
 
-- **Verknüpfen von Figuren mit verschiedenen Namen** („Cross Body Lead“ mit „Crossbody Lead“). Wer das will, benennt eine Figur um. Dann kommt der Vorschlag.
+- **Arten von Verweisen** („baut auf“, „ähnlich“, „gleiche Figur“). Ein Verweis ist einfach ein Verweis, ohne Beschriftung.
+- **Vorschläge nach ähnlichen Namen.** Vorgeschlagen wird nur bei gleichem Namen. Alles andere verknüpft der Autor von Hand.
 - **Wischen mit dem Finger zum Vor- oder Zurückgehen.** Es geht nur um die Animation, der Autor hat das ausdrücklich so gesagt.
 - **Andere Sortierungen der Liste** (nach Datum, nach Anzahl der Medien und Ähnliches).
 - **Gemeinsame Inhalte verknüpfter Figuren.** Jede Figur behält ihre eigenen Texte und Medien. Ein Verweis ist nur ein Sprung.
@@ -36,7 +37,7 @@ Viele Figuren kommen in mehreren Tänzen vor, zum Beispiel „Crossbody Lead“ 
 
 Zwei Namen gelten als gleich, wenn sie nach dem Abschneiden der Leerzeichen am Rand ohne Unterscheidung von Groß- und Kleinschreibung übereinstimmen. „Crossbody Lead“ und „crossbody lead “ sind gleich, „Cross Body Lead“ ist es nicht.
 
-Kandidaten für einen Verweis sind nur Figuren, die
+Kandidaten für einen **Vorschlag** sind nur Figuren, die
 - in einem **anderen Tanz** liegen (Gleichnamige im selben Tanz sind Doppel, keine Verweise),
 - **nicht im Papierkorb** sind,
 - **noch nicht** mit dieser Figur verknüpft sind.
@@ -66,33 +67,40 @@ Ein Dialog, zum Beispiel:
 > [Nicht verknüpfen] [Verknüpfen]
 
 - Genannt werden die Tänze aller Kandidaten. Es gibt eine einzige Entscheidung für alle Kandidaten zusammen. *(Meine Wahl: einfacher als einzelne Häkchen. Wer einzelne nicht will, löst sie danach.)*
-- „Verknüpfen“ verbindet die Figur mit allen Kandidaten.
+- „Verknüpfen“ legt je einen Verweis zwischen der Figur und jedem Kandidaten an. Die Kandidaten werden dadurch nicht untereinander verknüpft.
 - Schließen des Dialogs ohne Antwort (Zurück, daneben tippen) zählt als „Nicht verknüpfen“. *(Meine Wahl, damit niemand in einer Schleife landet.)*
 
-### Verweise gelten für die ganze Gruppe
+### Jeder Verweis gilt einzeln (Wunsch des Autors)
 
-Verknüpfte Figuren bilden eine Gruppe. Wird eine Figur mit einer anderen verknüpft, die schon in einer Gruppe ist, wandert sie in diese Gruppe. Gehören die Kandidaten zu verschiedenen Gruppen, werden die Gruppen zusammengelegt. Jede Figur einer Gruppe zeigt alle anderen.
+Ein Verweis verbindet genau zwei Figuren und ist auf beiden Seiten sichtbar. Wer „Fächer“ mit „Hockeystick“ verknüpft, sieht bei „Fächer“ den „Hockeystick“ und bei „Hockeystick“ den „Fächer“. Verweise setzen sich **nicht** fort: Ist „Hockeystick“ außerdem mit „New York“ verknüpft, zeigt „Fächer“ trotzdem nur „Hockeystick“. Zwischen zwei Figuren gibt es höchstens einen Verweis. Eine Figur kann nicht mit sich selbst verknüpft werden.
 
-Durch das Zusammenlegen können zwei Figuren aus demselben Tanz in einer Gruppe landen, zum Beispiel zwei gleichnamige Figuren in der Salsa. Das ist erlaubt. „Auch in“ zeigt dann einfach alle anderen Figuren der Gruppe. *(Meine Wahl: seltener Fall, einfache Regel, und man kann lösen.)*
+**Umbenennen behält die Verweise.** Meist korrigiert man damit nur die Schreibweise, und bei Verweisen von Hand spielt der Name ohnehin keine Rolle. Passt der neue Name zu weiteren Figuren, kommt für ihn der Vorschlag. *(Meine Wahl: der Autor hat den Verweisen zugestimmt, sie verschwinden nicht stillschweigend.)*
 
-**Umbenennen behält die Verknüpfungen.** Meist korrigiert man damit nur die Schreibweise. Passt die Verknüpfung nicht mehr, löst man sie. Passt der neue Name zu weiteren Figuren, kommt für ihn der Vorschlag, und „Verknüpfen“ legt die Gruppen zusammen. *(Meine Wahl: der Autor hat den Verknüpfungen zugestimmt, sie verschwinden nicht stillschweigend.)*
+### Von Hand verknüpfen (Wunsch des Autors)
+
+Beim Bearbeiten einer Figur gibt es im Abschnitt „Siehe auch“ einen Knopf **„Figur verknüpfen“**. Er öffnet eine Auswahl aller Figuren mit Suchfeld (Suche im Namen). Angezeigt wird jeweils der Figurenname und klein darunter der Tanz, wie in der Liste „Alle Figuren“.
+- Wählbar sind alle Figuren außer der Figur selbst, außer schon verknüpften und außer solchen im Papierkorb, **auch Figuren aus demselben Tanz** und Figuren mit anderem Namen.
+- Ein Tipp auf eine Figur fügt sie dem Entwurf hinzu und schließt die Auswahl. *(Meine Wahl: eine Figur pro Durchgang, einfacher als Mehrfachauswahl.)*
+- Wie alle Änderungen beim Bearbeiten wird das erst mit „Speichern“ wirksam und mit „Abbrechen“ verworfen.
 
 ### Anzeige auf der Figurenseite
 
-Unten auf der Figurenseite, unter den drei Bereichen, steht ein Abschnitt **„Auch in“** mit einem Eintrag pro verknüpfter Figur: der Tanzname, klein darunter der Figurenname, falls er anders geschrieben ist. Ein Tipp öffnet diese Figur mit dem normalen Übergang nach links, und Zurück führt zur vorherigen Figur zurück. Ohne Verknüpfungen fehlt der Abschnitt ganz.
+Unten auf der Figurenseite, unter den drei Bereichen, steht ein Abschnitt **„Siehe auch“** mit einem Eintrag pro verknüpfter Figur: der Figurenname, klein darunter der Tanz. Ein Tipp öffnet diese Figur mit dem normalen Übergang nach links, und Zurück führt zur vorherigen Figur zurück. Ohne Verweise fehlt der Abschnitt außerhalb des Bearbeitens ganz.
 
-Sortierung der Einträge: in der Reihenfolge der Tänze auf der Startseite. *(Meine Wahl.)*
+Sortierung der Einträge: in der Reihenfolge der Tänze auf der Startseite, innerhalb eines Tanzes in der Reihenfolge der Figuren dort. *(Meine Wahl.)*
 
 ### Verweis lösen
 
-Beim Bearbeiten einer Figur hat jeder Eintrag in „Auch in“ einen Knopf zum Lösen. Lösen nimmt die Figur *dieses Eintrags* aus der Gruppe, nicht die gerade bearbeitete. Wer bei der Salsa-Figur neben „Rumba“ auf Lösen tippt, meint: „Die Rumba-Figur gehört nicht dazu.“ Die übrigen bleiben untereinander verknüpft. Die herausgenommene Figur gilt als „schon gefragt“ für ihren Namen, damit der Vorschlag nicht sofort wiederkommt. *(Meine Wahl.)* Wie das Entfernen von Medien wird auch das Lösen erst mit „Speichern“ wirksam und mit „Abbrechen“ verworfen. *(Meine Wahl, passt zum übrigen Bearbeiten.)*
+Beim Bearbeiten einer Figur hat jeder Eintrag in „Siehe auch“ einen Knopf zum Lösen. Lösen entfernt genau diesen einen Verweis, auf beiden Seiten. Andere Verweise der beiden Figuren bleiben. Beide Figuren gelten danach als „schon gefragt“ für ihren Namen, damit ein gelöster Verweis zwischen gleichnamigen Figuren nicht wieder vorgeschlagen wird. *(Meine Wahl.)* Wie das Entfernen von Medien wird auch das Lösen erst mit „Speichern“ wirksam und mit „Abbrechen“ verworfen. *(Meine Wahl, passt zum übrigen Bearbeiten.)*
 
-Hat jemand einen Vorschlag abgelehnt und will die Verknüpfung doch, benennt er die Figur kurz um und wieder zurück. *(Meine Wahl: kein eigener Knopf „Verknüpfen“, damit es einfach bleibt. Der Builder darf einen vorschlagen, falls er sich ohne Aufwand ergibt.)*
+Wer einen Vorschlag abgelehnt hat und die Verknüpfung doch will, nimmt „Figur verknüpfen“.
+
+Die Rückfrage „Änderungen verwerfen?“ berücksichtigt auch geänderte Verweise.
 
 ### Papierkorb und Löschen
 
-- Eine Figur im Papierkorb erscheint bei den anderen nicht in „Auch in“. Sie behält aber ihre Gruppe. Wird sie wiederhergestellt, ist sie wieder verknüpft.
-- Endgültig gelöschte Figuren (nach 30 Tagen) verschwinden aus der Gruppe. Bleibt nur eine Figur übrig, ist sie nicht mehr verknüpft.
+- Eine Figur im Papierkorb erscheint bei den anderen nicht in „Siehe auch“. Ihre Verweise bleiben aber erhalten. Wird sie wiederhergestellt, ist sie wieder verknüpft.
+- Endgültig gelöschte Figuren (nach 30 Tagen) verlieren ihre Verweise.
 - Ein Tanz lässt sich wie bisher nur löschen, wenn er keine Figuren mehr enthält (außer solchen im Papierkorb). Für die Verweise ändert sich dadurch nichts.
 
 ### Sicherung und Teilen
@@ -125,7 +133,7 @@ Auf der Startseite sitzt oben in der Leiste, links neben dem Menü (⋮), ein Sy
 
 ## Übergänge
 
-- **Vorwärts** (etwas antippen, das tiefer führt: Tanz, Figur, Suche, Einstellungen, Papierkorb, Empfang, Verweis in „Auch in“): Der bisherige Bildschirm gleitet nach links hinaus, der neue kommt von rechts herein.
+- **Vorwärts** (etwas antippen, das tiefer führt: Tanz, Figur, Suche, Einstellungen, Papierkorb, Empfang, Eintrag in „Siehe auch“): Der bisherige Bildschirm gleitet nach links hinaus, der neue kommt von rechts herein.
 - **Zurück** (Zurück-Pfeil, Zurück-Geste, Zurück-Taste): umgekehrt.
 - Das gilt für alle Wechsel zwischen Bildschirmen. Dialoge und der Vollbild-Player sind keine Bildschirme und bleiben, wie sie sind.
 - Dauer etwa 300 ms. *(Meine Wahl, Feinabstimmung dem Builder überlassen.)*
@@ -141,8 +149,8 @@ Auf der Startseite sitzt oben in der Leiste, links neben dem Menü (⋮), ein Sy
 
 ## Dem Builder überlassen
 
-- Wie Gruppen und das „schon gefragt für Namen X“ gespeichert werden (Spalten an der Figur, eigene Tabelle, Ähnliches).
+- Wie Verweise und das „schon gefragt für Namen X“ gespeichert werden (eigene Tabelle für Verweise, Spalte an der Figur o. Ä.).
 - Genaue Formulierungen und Symbole, im Ton der bestehenden App.
-- Wie der Abschnitt „Auch in“ aussieht, passend zu den bestehenden Bereichskarten.
+- Wie der Abschnitt „Siehe auch“ und die Auswahl beim Verknüpfen aussehen, passend zu den bestehenden Bereichskarten.
 - Wie die Übergänge technisch umgesetzt werden.
 - Ob die Liste Abschnittsbuchstaben (A, B, C …) bekommt. Nicht verlangt, aber erlaubt, wenn es den Überblick verbessert.
