@@ -3,6 +3,7 @@ package io.github.katzfuss11.tanzlexikon.data
 import androidx.room.Dao
 import androidx.room.Embedded
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import io.github.katzfuss11.tanzlexikon.lexikon.FigureSummary
 import io.github.katzfuss11.tanzlexikon.lexikon.TrashedFigure
@@ -200,4 +201,57 @@ interface LexikonDao {
         """,
     )
     suspend fun activeMediaRows(): List<MediaRow>
+    // ---- Verweise ----
+
+    @Query(ACTIVE_FIGURE_ROWS)
+    fun observeActiveFigureRows(): Flow<List<ActiveFigureRow>>
+
+    @Query(ACTIVE_FIGURE_ROWS)
+    suspend fun activeFigureRows(): List<ActiveFigureRow>
+
+    @Query("SELECT * FROM figure_link")
+    fun observeFigureLinks(): Flow<List<FigureLinkEntity>>
+
+    @Query("SELECT * FROM figure_link")
+    suspend fun allFigureLinks(): List<FigureLinkEntity>
+
+    @Query("SELECT * FROM figure WHERE id = :id")
+    fun observeFigure(id: Long): Flow<FigureEntity?>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertFigureLink(link: FigureLinkEntity)
+
+    @Query("DELETE FROM figure_link WHERE figureA = :a AND figureB = :b")
+    suspend fun deleteFigureLink(a: Long, b: Long)
+
+    @Query("UPDATE figure SET linkGroup = :group WHERE id = :id")
+    suspend fun setLinkGroup(id: Long, group: Long?)
+
+    @Query("UPDATE figure SET linkGroup = :to WHERE linkGroup = :from")
+    suspend fun mergeLinkGroup(from: Long, to: Long)
+
+    @Query("SELECT COALESCE(MAX(linkGroup), 0) + 1 FROM figure")
+    suspend fun nextLinkGroup(): Long
+
+    @Query("UPDATE figure SET askedName = :askedName WHERE id = :id")
+    suspend fun setAskedName(id: Long, askedName: String?)
 }
+
+/** Eine aktive Figur (nicht im Papierkorb, mit Tanz) samt allem, was zum Sortieren und Verknüpfen nötig ist. */
+data class ActiveFigureRow(
+    val id: Long,
+    val name: String,
+    val danceId: Long,
+    val danceName: String,
+    val categoryPosition: Int,
+    val dancePosition: Int,
+    val figurePosition: Int,
+    val linkGroup: Long?,
+)
+
+private const val ACTIVE_FIGURE_ROWS = """
+    SELECT f.id, f.name, f.danceId, d.name AS danceName, c.position AS categoryPosition,
+           d.position AS dancePosition, f.position AS figurePosition, f.linkGroup
+    FROM figure f JOIN dance d ON d.id = f.danceId JOIN category c ON c.id = d.categoryId
+    WHERE f.trashedAt IS NULL
+"""

@@ -59,3 +59,23 @@ fun fileExtension(m: MediaEntity): String {
         else -> if (m.kind == io.github.katzfuss11.tanzlexikon.data.MediaKind.IMAGE) "jpg" else "mp4"
     }
 }
+
+/** Eine Figur in Listen (Alle Figuren, Siehe auch, Auswahl beim Verknüpfen). */
+@kotlinx.serialization.Serializable
+data class FigureListItem(val id: Long, val name: String, val danceId: Long, val danceName: String)
+
+/**
+ * „Siehe auch“ einer Figur: [otherDances] sind die Mitglieder ihrer Gruppe (und direkt verbundene Figuren)
+ * aus anderen Tänzen, [sameDance] die direkt verbundenen Figuren aus demselben Tanz.
+ */
+@kotlinx.serialization.Serializable
+data class FigureLinks(
+    val otherDances: List<FigureListItem> = emptyList(),
+    val sameDance: List<FigureListItem> = emptyList(),
+)
+
+/** Vorschlag, eine Figur mit gleichnamigen Figuren aus anderen Tänzen zu verknüpfen. */
+data class LinkSuggestion(val figureName: String, val candidates: List<FigureListItem>)
+
+/** So werden Namen verglichen: ohne Leerzeichen am Rand und ohne Unterschied von Groß- und Kleinschreibung. */
+fun normalizeName(name: String): String = name.trim().lowercase(java.util.Locale.GERMAN)
