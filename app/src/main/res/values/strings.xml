@@ -154,6 +154,10 @@
     <string name="error_generic">Das hat nicht geklappt: %1$s</string>
     <string name="settings_about">Über</string>
     <string name="installed_version">Installierte Version: %1$s</string>
+    <string name="changelog">Versionsverlauf</string>
+    <string name="changelog_hint">Was sich in jeder Version geändert hat</string>
+    <string name="changelog_version">Version %1$s</string>
+    <string name="changelog_upcoming">in Arbeit</string>
     <string name="open_trash_hint">Gelöschte Figuren der letzten 30 Tage</string>
 
     <!-- Updates -->

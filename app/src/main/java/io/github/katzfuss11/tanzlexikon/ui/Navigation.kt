@@ -36,6 +36,7 @@ import io.github.katzfuss11.tanzlexikon.ui.papierkorb.PapierkorbScreen
 import io.github.katzfuss11.tanzlexikon.ui.start.StartScreen
 import io.github.katzfuss11.tanzlexikon.ui.tanz.TanzScreen
 import io.github.katzfuss11.tanzlexikon.ui.suche.SucheScreen
+import io.github.katzfuss11.tanzlexikon.ui.versionen.VersionsverlaufScreen
 
 /** Die Adressen der Bildschirme. */
 object Routes {
@@ -46,6 +47,7 @@ object Routes {
     const val PAPIERKORB = "papierkorb"
     const val EINSTELLUNGEN = "einstellungen"
     const val EMPFANG = "empfang"
+    const val VERSIONSVERLAUF = "versionsverlauf"
 
     fun tanz(danceId: Long) = "tanz/$danceId"
     /** [neu]: frisch angelegt oder empfangen, dann wird einmal Verknüpfen vorgeschlagen. */
@@ -125,8 +127,13 @@ fun TanzlexikonNavHost(nav: NavHostController = rememberNavController()) {
         }
         composable(Routes.PAPIERKORB) { PapierkorbScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.EINSTELLUNGEN) {
-            EinstellungenScreen(onBack = { nav.popBackStack() }, onTrash = { nav.navigate(Routes.PAPIERKORB) })
+            EinstellungenScreen(
+                onBack = { nav.popBackStack() },
+                onTrash = { nav.navigate(Routes.PAPIERKORB) },
+                onChangelog = { nav.navigate(Routes.VERSIONSVERLAUF) },
+            )
         }
+        composable(Routes.VERSIONSVERLAUF) { VersionsverlaufScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.EMPFANG) {
             // Die Datei wird beim Betreten festgehalten, damit ein späteres Teilen sie nicht austauscht.
             val uri = remember { app.pendingImport.value }
