@@ -104,6 +104,7 @@ fun EmpfangScreen(
                             ArchiveError.NOT_TANZLEXIKON -> R.string.error_not_a_figure
                             ArchiveError.NEWER_FORMAT -> R.string.error_newer_format
                             ArchiveError.CORRUPT -> R.string.error_corrupt
+                            ArchiveError.WRITE_FAILED -> R.string.error_write_failed
                         },
                     ),
                     onClose = onClose,

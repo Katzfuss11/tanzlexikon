@@ -31,7 +31,16 @@ class ArchiveReader {
                 val entry = zip.nextEntry ?: break
                 if (entry.isDirectory) continue
                 if (!isSafePath(entry.name)) throw ArchiveException(ArchiveError.CORRUPT)
-                onFile(entry.name, NonClosing(zip))
+                try {
+                    onFile(entry.name, Source(zip))
+                } catch (e: SourceReadException) {
+                    throw ArchiveException(ArchiveError.CORRUPT, e.cause)
+                } catch (e: ArchiveException) {
+                    throw e
+                } catch (e: Exception) {
+                    // Das Archiv war lesbar, aber das Ziel (Galerie, Speicher) hat abgelehnt.
+                    throw ArchiveException(ArchiveError.WRITE_FAILED, e)
+                }
             }
             return manifest
         } catch (e: ArchiveException) {
@@ -52,8 +61,19 @@ class ArchiveReader {
         return normalized.split('/').none { it == ".." }
     }
 
-    /** Verhindert, dass der Empfänger einer Datei das ganze ZIP schließt. */
-    private class NonClosing(inner: InputStream) : FilterInputStream(inner) {
+    private class SourceReadException(cause: IOException) : IOException(cause)
+
+    /**
+     * Gibt eine Datei aus dem ZIP weiter. Lesefehler werden markiert, damit sie sich von
+     * Schreibfehlern beim Empfänger unterscheiden lassen. Der Empfänger kann das ZIP nicht schließen.
+     */
+    private class Source(inner: InputStream) : FilterInputStream(inner) {
+        override fun read(): Int = guard { super.read() }
+        override fun read(b: ByteArray, off: Int, len: Int): Int = guard { super.read(b, off, len) }
+        override fun skip(n: Long): Long = guard { super.skip(n) }
         override fun close() = Unit
+
+        private inline fun <T> guard(block: () -> T): T =
+            try { block() } catch (e: IOException) { throw SourceReadException(e) }
     }
 }

@@ -61,11 +61,14 @@ class BackupService(
         }
         if (manifest.kind != ArchiveKind.BACKUP) return@withContext ImportOutcome.WrongKind
 
-        // 2. Reicht der Platz für die Videos und Bilder?
+        // 2. Reicht der Platz für die Videos und Bilder und für die Sicherheitskopie des jetzigen Stands?
         val withFile = manifest.categories.flatMap { c -> c.dances.flatMap { d -> d.figures.flatMap { it.media } } }
             .filter { it.file != null }
         val required = withFile.sumOf { it.sizeBytes ?: 0L }
-        if (!hasEnoughSpace(required, availableBytes())) return@withContext ImportOutcome.NotEnoughSpace(required)
+        val safetyCopy = repository.snapshot(mediaChecker::isAvailable).files.sumOf { (_, m) -> sizeOf(m) }
+        if (!hasEnoughSpace(required + safetyCopy, availableBytes())) {
+            return@withContext ImportOutcome.NotEnoughSpace(required + safetyCopy)
+        }
 
         // 3. Den jetzigen Stand sichern, bevor etwas überschrieben wird.
         safetyExport(System.currentTimeMillis())

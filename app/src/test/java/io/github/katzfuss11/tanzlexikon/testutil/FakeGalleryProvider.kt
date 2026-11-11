@@ -20,6 +20,9 @@ class FakeGalleryProvider : ContentProvider() {
     val items = mutableListOf<Item>()
     val inserted = mutableListOf<ContentValues>()
     var lastPending: Int? = null
+
+    /** Wenn true, lehnt die Galerie neue Videos ab (wie bei vollem Speicher). */
+    var failVideoInserts = false
     private var nextId = 100L
 
     override fun onCreate() = true
@@ -48,6 +51,7 @@ class FakeGalleryProvider : ContentProvider() {
     }
 
     override fun insert(uri: Uri, values: ContentValues?): Uri {
+        if (failVideoInserts && uri.pathSegments.contains("video")) throw java.io.IOException("Speicher voll")
         inserted += ContentValues(values)
         val id = nextId++
         val f = File.createTempFile("gallery", ".bin", context!!.cacheDir)

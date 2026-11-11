@@ -88,6 +88,33 @@ class ArchiveRoundTripTest {
         expectError(ArchiveError.CORRUPT, bytes.copyOf(100))
     }
 
+    private fun archiveWithBigFile(): ByteArray {
+        val big = Random(3).nextBytes(256 * 1024)
+        val m = manifest(media = listOf(ArchMedia(Section.GENERAL, MediaKind.VIDEO, 0, file = "media/1.mp4", sizeBytes = big.size.toLong())))
+        return write(m, listOf(ArchiveFile("media/1.mp4", big.size.toLong()) { ByteArrayInputStream(big) }))
+    }
+
+    private fun readExpecting(expected: ArchiveError, bytes: ByteArray, onFile: (String, java.io.InputStream) -> Unit) {
+        try {
+            ArchiveReader().read(ByteArrayInputStream(bytes), onFile)
+            fail("Fehler $expected erwartet")
+        } catch (e: ArchiveException) {
+            assertEquals(expected, e.reason)
+        }
+    }
+
+    @Test fun read_fileCutOffWhileCopying_throwsCorrupt() {
+        val bytes = archiveWithBigFile()
+        readExpecting(ArchiveError.CORRUPT, bytes.copyOf(bytes.size / 2)) { _, data -> data.copyTo(ByteArrayOutputStream()) }
+    }
+
+    @Test fun read_destinationFailsWhileCopying_throwsWriteFailed() {
+        readExpecting(ArchiveError.WRITE_FAILED, archiveWithBigFile()) { _, data ->
+            data.read(ByteArray(10))
+            throw java.io.IOException("Speicher voll")
+        }
+    }
+
     @Test fun read_formatVersion2_throwsNewerFormat() {
         expectError(ArchiveError.NEWER_FORMAT, write(manifest(version = 2)))
     }

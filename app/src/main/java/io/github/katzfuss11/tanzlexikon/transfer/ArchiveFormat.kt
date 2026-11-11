@@ -59,7 +59,12 @@ data class ArchMedia(
 /** Eine Datei, die ins Archiv soll. Sie wird erst beim Schreiben geöffnet. */
 data class ArchiveFile(val path: String, val size: Long, val open: () -> InputStream)
 
-enum class ArchiveError { NOT_TANZLEXIKON, NEWER_FORMAT, CORRUPT }
+enum class ArchiveError {
+    NOT_TANZLEXIKON, NEWER_FORMAT, CORRUPT,
+
+    /** Das Archiv ist in Ordnung, aber das Ziel (Galerie, Speicher) hat das Schreiben abgelehnt. */
+    WRITE_FAILED,
+}
 
 class ArchiveException(val reason: ArchiveError, cause: Throwable? = null) : Exception(reason.name, cause)
 

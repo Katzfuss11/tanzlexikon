@@ -175,6 +175,7 @@ private fun resultMessage(state: BackupState): String? {
                     ArchiveError.NOT_TANZLEXIKON -> R.string.error_not_tanzlexikon
                     ArchiveError.NEWER_FORMAT -> R.string.error_newer_format
                     ArchiveError.CORRUPT -> R.string.error_corrupt
+                    ArchiveError.WRITE_FAILED -> R.string.error_write_failed
                 },
             )
             ImportOutcome.WrongKind -> stringResource(R.string.error_wrong_kind)

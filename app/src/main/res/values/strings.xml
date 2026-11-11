@@ -129,8 +129,9 @@
         <item quantity="other">%d Videos oder Bilder fehlten schon in der Sicherung.</item>
     </plurals>
     <string name="error_not_tanzlexikon">Das ist keine Tanzlexikon-Sicherung.</string>
-    <string name="error_newer_format">Diese Sicherung stammt aus einer neueren App-Version. Bitte zuerst die App aktualisieren.</string>
+    <string name="error_newer_format">Diese Datei stammt aus einer neueren App-Version. Bitte zuerst die App aktualisieren.</string>
     <string name="error_corrupt">Die Datei ist beschädigt oder unvollständig.</string>
+    <string name="error_write_failed">Die Videos und Bilder konnten nicht in die Galerie gelegt werden. Ist der Speicher voll? Die Datei selbst ist in Ordnung, bitte nicht löschen.</string>
     <string name="error_wrong_kind">Das ist eine einzelne geteilte Figur, keine Sicherung. Öffne sie einfach mit dem Tanzlexikon, um sie hinzuzufügen.</string>
     <string name="error_space">Nicht genug Speicherplatz. Benötigt werden etwa %1$s plus 50 MB Reserve.</string>
     <string name="error_generic">Das hat nicht geklappt: %1$s</string>
