@@ -290,4 +290,43 @@ class FigurViewModelTest {
         val s = await { neu.state.first { it.suggestion == null && it.links.otherDances.isNotEmpty() } }
         assertEquals(listOf("Salsa"), s.links.otherDances.map { it.danceName })
     }
+
+    @Test fun save_keepsLinksMadeElsewhereWhileEditing() {
+        val s = fig("Salsa", "Fächer")
+        vm.startEditing()
+        vm.updateDraft { it.copy(generalText = "Neu") }
+
+        // Während der Entwurf offen ist, wird anderswo verknüpft (z. B. Vorschlag bei einer empfangenen Figur).
+        await { repo.answerSuggestion(s, listOf(figureId), link = true) }
+        await { vm.state.first { it.links.otherDances.isNotEmpty() } }
+        vm.save()
+
+        await { vm.state.first { !it.editing } }
+        assertEquals(listOf(s), await { repo.observeLinks(figureId).first() }.otherDances.map { it.id })
+    }
+
+    @Test fun linkMadeElsewhereWhileEditing_isNotAChange() {
+        val s = fig("Salsa", "Fächer")
+        vm.startEditing()
+
+        await { repo.answerSuggestion(s, listOf(figureId), link = true) }
+        await { vm.state.first { it.links.otherDances.isNotEmpty() } }
+
+        assertFalse(vm.state.value.hasChanges)
+    }
+
+    @Test fun save_renameAndUnlink_stillAsksForNewName() {
+        val h = item(fig("Rumba", "Hockeystick"))
+        fig("Salsa", "Hammerlock")
+        await { repo.saveLinks(figureId, emptyList(), listOf(h.id)) }
+        await { vm.state.first { it.links.sameDance.isNotEmpty() } }
+
+        vm.startEditing()
+        vm.updateDraft { it.copy(name = "Hammerlock") }
+        vm.removeLink(h)
+        vm.save()
+
+        val s = await { vm.state.first { !it.editing } }
+        assertEquals(listOf("Salsa"), s.suggestion?.candidates?.map { it.danceName })
+    }
 }

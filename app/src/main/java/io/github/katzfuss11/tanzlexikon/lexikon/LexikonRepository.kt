@@ -343,25 +343,50 @@ class LexikonRepository(private val db: TanzDatabase) {
     suspend fun saveLinks(figureId: Long, otherDanceIds: List<Long>, sameDanceIds: List<Long>) = db.withTransaction {
         val self = dao.figure(figureId) ?: return@withTransaction
         val current = computeLinks(self, dao.activeFigureRows(), dao.allFigureLinks())
-        val currentOther = current.otherDances.map { it.id }.toSet()
-        val currentSame = current.sameDance.map { it.id }.toSet()
+        applyLinkChanges(
+            self,
+            fromOther = current.otherDances.map { it.id }.toSet(), fromSame = current.sameDance.map { it.id }.toSet(),
+            toOther = otherDanceIds.toSet(), toSame = sameDanceIds.toSet(),
+        )
+    }
 
-        (currentOther - otherDanceIds.toSet()).forEach { other ->
+    /**
+     * Wie [saveLinks], aber nur die Änderungen von [from] (Stand beim Öffnen des Entwurfs) nach [to].
+     * So bleiben Verweise erhalten, die anderswo entstanden sind, während der Entwurf offen war.
+     */
+    suspend fun saveLinkChanges(figureId: Long, from: FigureLinks, to: FigureLinks) = db.withTransaction {
+        val self = dao.figure(figureId) ?: return@withTransaction
+        applyLinkChanges(
+            self,
+            fromOther = from.otherDances.map { it.id }.toSet(), fromSame = from.sameDance.map { it.id }.toSet(),
+            toOther = to.otherDances.map { it.id }.toSet(), toSame = to.sameDance.map { it.id }.toSet(),
+        )
+    }
+
+    /** Entfernte Einträge lösen, neue anlegen. Ob ein neuer Eintrag Gruppe oder Verbindung wird, entscheidet sein Tanz jetzt. */
+    private suspend fun applyLinkChanges(
+        self: FigureEntity,
+        fromOther: Set<Long>,
+        fromSame: Set<Long>,
+        toOther: Set<Long>,
+        toSame: Set<Long>,
+    ) {
+        val figureId = self.id
+        (fromOther - toOther).forEach { other ->
             if (self.linkGroup != null && dao.figure(other)?.linkGroup == self.linkGroup) dao.setLinkGroup(other, null)
             dao.deleteFigureLink(minOf(figureId, other), maxOf(figureId, other))
             markAsked(figureId)
             markAsked(other)
         }
-        (currentSame - sameDanceIds.toSet()).forEach { other ->
+        (fromSame - toSame).forEach { other ->
             dao.deleteFigureLink(minOf(figureId, other), maxOf(figureId, other))
             markAsked(figureId)
             markAsked(other)
         }
-        val added = otherDanceIds.filter { it !in currentOther && it != figureId }
-        if (added.isNotEmpty()) joinGroups(listOf(figureId) + added)
-        sameDanceIds.filter { it !in currentSame && it != figureId }.forEach { other ->
-            dao.insertFigureLink(FigureLinkEntity(minOf(figureId, other), maxOf(figureId, other)))
-        }
+        val added = ((toOther - fromOther) + (toSame - fromSame)) - figureId
+        val (sameDance, otherDance) = added.partition { dao.figure(it)?.danceId == self.danceId }
+        if (otherDance.isNotEmpty()) joinGroups(listOf(figureId) + otherDance)
+        sameDance.forEach { other -> dao.insertFigureLink(FigureLinkEntity(minOf(figureId, other), maxOf(figureId, other))) }
     }
 
     /** Legt alle [ids] in eine Gruppe; vorhandene Gruppen werden zusammengelegt. */

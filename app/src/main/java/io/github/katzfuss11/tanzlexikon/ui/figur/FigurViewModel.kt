@@ -34,6 +34,8 @@ data class FigurDraft(
     val media: List<MediaEntity>,
     /** „Siehe auch“, wie es nach dem Speichern sein soll. */
     val links: FigureLinks = FigureLinks(),
+    /** „Siehe auch“ beim Öffnen des Entwurfs. Gespeichert werden nur die Änderungen dagegen. */
+    val baseLinks: FigureLinks = FigureLinks(),
 )
 
 /** Wohin das nächste aufgenommene oder ausgewählte Medium gehört. */
@@ -85,7 +87,7 @@ class FigurViewModel(
         val shown = (e.draft?.links ?: links).let { l -> (l.otherDances + l.sameDance).map { it.id }.toSet() }
         FigurState(
             detail = detail, editing = e.draft != null, draft = e.draft, error = e.error,
-            hasChanges = e.draft != null && detail != null && e.draft != draftOf(detail, links),
+            hasChanges = e.draft != null && detail != null && e.draft != draftOf(detail, e.draft.baseLinks),
             links = links, suggestion = s,
             linkCandidates = all.filter { it.id != figureId && it.id !in shown },
         )
@@ -193,8 +195,9 @@ class FigurViewModel(
             list.mapIndexed { i, m -> m.copy(position = i) }
         }
         viewModelScope.launch {
+            // Verweise zuerst: wird zugleich umbenannt, gilt „schon gefragt“ beim Lösen noch für den alten Namen.
+            repo.saveLinkChanges(figureId, from = draft.baseLinks, to = draft.links)
             repo.saveFigure(figureId, draft.name, draft.generalText, draft.leaderText, draft.followerText, media)
-            repo.saveLinks(figureId, draft.links.otherDances.map { it.id }, draft.links.sameDance.map { it.id })
             // Erst nach dem Speichern: passt der Name zu Figuren in anderen Tänzen, einmal fragen.
             suggestion.value = repo.linkSuggestion(figureId)
             edit.value = EditState()
@@ -214,7 +217,7 @@ class FigurViewModel(
         val json = Json { ignoreUnknownKeys = true }
 
         fun draftOf(d: FigureDetail, links: FigureLinks) =
-            FigurDraft(d.figure.name, d.figure.generalText, d.figure.leaderText, d.figure.followerText, d.media, links)
+            FigurDraft(d.figure.name, d.figure.generalText, d.figure.leaderText, d.figure.followerText, d.media, links, baseLinks = links)
 
         fun decodeDraft(text: String): FigurDraft? =
             runCatching { json.decodeFromString(FigurDraft.serializer(), text) }.getOrNull()
