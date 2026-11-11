@@ -40,7 +40,7 @@ Zwei Namen gelten als gleich, wenn sie nach dem Abschneiden der Leerzeichen am R
 Kandidaten für einen **Vorschlag** sind nur Figuren, die
 - in einem **anderen Tanz** liegen (Gleichnamige im selben Tanz sind Doppel, keine Verweise),
 - **nicht im Papierkorb** sind,
-- **noch nicht** mit dieser Figur verknüpft sind.
+- **nicht schon** in derselben Gruppe wie diese Figur sind.
 
 ### Wann die App vorschlägt
 
