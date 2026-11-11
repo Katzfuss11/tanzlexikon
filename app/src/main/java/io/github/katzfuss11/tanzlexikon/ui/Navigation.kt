@@ -14,6 +14,7 @@ import io.github.katzfuss11.tanzlexikon.ui.empfang.EmpfangScreen
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -46,14 +47,17 @@ object Routes {
     fun figur(figureId: Long) = "figur/$figureId"
 }
 
-/** Holt ein ViewModel, das Zugriff auf die Dienste der App bekommt. */
+/**
+ * Holt ein ViewModel, das Zugriff auf die Dienste der App bekommt.
+ * In [create] liefert `createSavedStateHandle()` einen Zustand, der das Beenden durch Android übersteht.
+ */
 @Composable
 inline fun <reified VM : ViewModel> appViewModel(
     key: String? = null,
-    crossinline create: (TanzlexikonApp) -> VM,
+    crossinline create: CreationExtras.(TanzlexikonApp) -> VM,
 ): VM = viewModel(
     key = key,
-    factory = viewModelFactory { initializer { create(this[APPLICATION_KEY] as TanzlexikonApp) } },
+    factory = viewModelFactory { initializer { create(this, this[APPLICATION_KEY] as TanzlexikonApp) } },
 )
 
 @Composable

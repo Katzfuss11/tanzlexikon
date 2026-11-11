@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
+import kotlinx.serialization.Serializable
 
 /** Die drei Bereiche einer Figur. */
 enum class Section { GENERAL, LEADER, FOLLOWER }
@@ -73,6 +74,8 @@ data class FigureEntity(
     ],
     indices = [Index("figureId")],
 )
+// Serializable, damit ein Entwurf mit seinen Medien das Beenden durch Android übersteht.
+@Serializable
 data class MediaEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val figureId: Long,

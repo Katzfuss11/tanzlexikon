@@ -57,6 +57,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.createSavedStateHandle
 import io.github.katzfuss11.tanzlexikon.R
 import io.github.katzfuss11.tanzlexikon.data.MediaEntity
 import io.github.katzfuss11.tanzlexikon.data.MediaKind
@@ -73,7 +74,9 @@ import io.github.katzfuss11.tanzlexikon.ui.appViewModel
 fun FigurScreen(
     figureId: Long,
     onBack: () -> Unit,
-    vm: FigurViewModel = appViewModel(key = "figur$figureId") { FigurViewModel(it.repository, figureId) },
+    vm: FigurViewModel = appViewModel(key = "figur$figureId") {
+        FigurViewModel(it.repository, figureId, createSavedStateHandle(), it.appScope)
+    },
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
@@ -186,22 +189,28 @@ fun FigurScreen(
             vm.errorShown()
         }
     }
-    // Beim Bearbeiten wirkt die Zurück-Taste wie "Abbrechen".
-    BackHandler(enabled = state.editing) { vm.cancelEditing() }
-
-    // Wohin das nächste ausgewählte Medium gehört: in einen Bereich oder als Ersatz für ein fehlendes.
-    var addTarget by rememberSaveable { mutableStateOf<Section?>(null) }
-    var relinkTarget by remember { mutableStateOf<MediaEntity?>(null) }
-    var youtubeFor by rememberSaveable { mutableStateOf<Section?>(null) }
-    val adder = rememberMediaAdder { picked ->
-        val relink = relinkTarget
-        if (relink != null) {
-            picked.firstOrNull()?.let { vm.relinkMedia(relink, it) }
-            relinkTarget = null
-        } else {
-            addTarget?.let { vm.addMedia(it, picked) }
-        }
+    // Beim Bearbeiten wirkt die Zurück-Taste wie "Abbrechen". Gibt es Änderungen, wird erst gefragt.
+    var askDiscard by rememberSaveable { mutableStateOf(false) }
+    fun cancel() {
+        if (state.hasChanges) askDiscard = true else vm.cancelEditing()
     }
+    BackHandler(enabled = state.editing) { cancel() }
+    if (askDiscard) {
+        AlertDialog(
+            onDismissRequest = { askDiscard = false },
+            text = { Text(stringResource(R.string.discard_changes)) },
+            confirmButton = {
+                TextButton(onClick = { askDiscard = false; vm.cancelEditing() }) { Text(stringResource(R.string.discard)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { askDiscard = false }) { Text(stringResource(R.string.keep_editing)) }
+            },
+        )
+    }
+
+    // Wohin das nächste ausgewählte Medium gehört, merkt sich das ViewModel (übersteht auch die Kamera).
+    var youtubeFor by rememberSaveable { mutableStateOf<Section?>(null) }
+    val adder = rememberMediaAdder { picked -> vm.onMediaPicked(picked) }
     youtubeFor?.let { section ->
         YouTubeDialog(
             onDismiss = { youtubeFor = null },
@@ -218,7 +227,7 @@ fun FigurScreen(
                 TopAppBar(
                     title = {},
                     navigationIcon = {
-                        IconButton(onClick = vm::cancelEditing) {
+                        IconButton(onClick = { cancel() }) {
                             Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cancel))
                         }
                     },
@@ -284,14 +293,14 @@ fun FigurScreen(
                             media = draft.media.filter { it.section == section },
                             editing = true,
                             onRemove = vm::removeMedia,
-                            onRelink = {
-                                relinkTarget = it
+                            onRelink = { m ->
+                                vm.chooseMediaTarget(MediaTarget.Relink(draft.media.indexOfFirst { it === m }))
                                 adder.pickOne()
                             },
                         )
                         AddMediaButton(
-                            onRecord = { addTarget = section; adder.recordVideo() },
-                            onGallery = { addTarget = section; adder.pickFromGallery() },
+                            onRecord = { vm.chooseMediaTarget(MediaTarget.Add(section)); adder.recordVideo() },
+                            onGallery = { vm.chooseMediaTarget(MediaTarget.Add(section)); adder.pickFromGallery() },
                             onYouTube = { youtubeFor = section },
                         )
                     }

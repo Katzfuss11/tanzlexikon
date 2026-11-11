@@ -25,6 +25,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import androidx.lifecycle.SavedStateHandle
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -53,6 +54,72 @@ class FigurViewModelTest {
     @After fun tearDown() {
         db.close()
         Dispatchers.resetMain()
+    }
+
+    // Wie nach dem Beenden durch Android: nur die gesicherten Werte überleben, das ViewModel ist neu.
+    private fun recreated(saved: SavedStateHandle): FigurViewModel {
+        val restored = SavedStateHandle(saved.keys().associateWith { saved.get<Any>(it) })
+        return FigurViewModel(repo, figureId, restored).also { v -> await { v.state.first { it.detail != null } } }
+    }
+
+    @Test fun draft_survivesRecreation() {
+        val saved = SavedStateHandle()
+        val first = FigurViewModel(repo, figureId, saved)
+        await { first.state.first { it.detail != null } }
+        first.startEditing()
+        first.updateDraft { it.copy(generalText = "Nach der Stunde getippt 💃") }
+
+        val second = recreated(saved)
+
+        assertTrue(second.state.value.editing)
+        assertEquals("Nach der Stunde getippt 💃", second.state.value.draft!!.generalText)
+    }
+
+    @Test fun recordedVideo_afterRecreation_landsInChosenSection() {
+        val saved = SavedStateHandle()
+        val first = FigurViewModel(repo, figureId, saved)
+        await { first.state.first { it.detail != null } }
+        first.startEditing()
+        first.updateDraft { it.copy(leaderText = "Hand höher") }
+        first.chooseMediaTarget(MediaTarget.Add(Section.LEADER))
+
+        val second = recreated(saved)
+        second.onMediaPicked(listOf(NewMedia(MediaKind.VIDEO, "content://media/external/video/media/7")))
+
+        val draft = second.state.value.draft!!
+        assertEquals("Hand höher", draft.leaderText)
+        assertEquals(listOf(Section.LEADER to "content://media/external/video/media/7"), draft.media.map { it.section to it.uri })
+    }
+
+    @Test fun relink_afterRecreation_replacesTheChosenMedium() {
+        val saved = SavedStateHandle()
+        val first = FigurViewModel(repo, figureId, saved)
+        await { first.state.first { it.detail != null } }
+        first.startEditing()
+        first.addMedia(Section.GENERAL, listOf(NewMedia(MediaKind.VIDEO, "content://alt/1"), NewMedia(MediaKind.VIDEO, "content://alt/2")))
+        first.chooseMediaTarget(MediaTarget.Relink(index = 1))
+
+        val second = recreated(saved)
+        second.onMediaPicked(listOf(NewMedia(MediaKind.IMAGE, "content://neu/3")))
+
+        assertEquals(listOf("content://alt/1", "content://neu/3"), second.state.value.draft!!.media.map { it.uri })
+    }
+
+    @Test fun mediaPicked_withoutDraft_startsEditingAndAttaches() {
+        vm.chooseMediaTarget(MediaTarget.Add(Section.GENERAL))
+        vm.onMediaPicked(listOf(NewMedia(MediaKind.VIDEO, "content://v/1")))
+
+        assertTrue(vm.state.value.editing)
+        assertEquals(listOf("content://v/1"), vm.state.value.draft!!.media.map { it.uri })
+    }
+
+    @Test fun hasChanges_onlyAfterRealChange() {
+        vm.startEditing()
+        assertFalse(vm.state.value.hasChanges)
+        vm.updateDraft { it.copy(name = "Fächer neu") }
+        assertTrue(vm.state.value.hasChanges)
+        vm.updateDraft { it.copy(name = "Fächer") }
+        assertFalse(vm.state.value.hasChanges)
     }
 
     @Test fun cancelEditing_discardsDraft_andDetailUnchanged() {
@@ -103,9 +170,10 @@ class FigurViewModelTest {
         vm.startEditing()
         vm.addMedia(Section.GENERAL, listOf(NewMedia(MediaKind.VIDEO, "content://alt", "alt.mp4", "video/mp4", 10)))
         vm.addMedia(Section.LEADER, listOf(NewMedia(MediaKind.YOUTUBE, "https://youtu.be/dQw4w9WgXcQ")))
-        val old = vm.state.value.draft!!.media.first { it.uri == "content://alt" }
+        val old = vm.state.value.draft!!.media.indexOfFirst { it.uri == "content://alt" }
 
-        vm.relinkMedia(old, NewMedia(MediaKind.VIDEO, "content://neu", "neu.mp4", "video/mp4", 20))
+        vm.chooseMediaTarget(MediaTarget.Relink(old))
+        vm.onMediaPicked(listOf(NewMedia(MediaKind.VIDEO, "content://neu", "neu.mp4", "video/mp4", 20)))
         val link = vm.state.value.draft!!.media.first { it.kind == MediaKind.YOUTUBE }
         vm.removeMedia(link)
 

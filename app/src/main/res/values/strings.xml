@@ -6,6 +6,9 @@
     <!-- Allgemein -->
     <string name="ok">OK</string>
     <string name="cancel">Abbrechen</string>
+    <string name="discard_changes">Änderungen verwerfen?</string>
+    <string name="discard">Verwerfen</string>
+    <string name="keep_editing">Weiter bearbeiten</string>
     <string name="save">Speichern</string>
     <string name="back">Zurück</string>
     <string name="more">Mehr</string>
