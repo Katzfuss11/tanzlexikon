@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.katzfuss11.tanzlexikon.transfer.BackupService
 import io.github.katzfuss11.tanzlexikon.transfer.ImportOutcome
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,8 @@ sealed interface BackupState {
 class EinstellungenViewModel(
     private val backup: BackupService,
     private val resolver: ContentResolver,
+    /** Hier laufen Sicherung und Wiederherstellung, damit sie auch fertig werden, wenn der Bildschirm schon zu ist. */
+    private val workScope: CoroutineScope? = null,
 ) : ViewModel() {
     private val _state = MutableStateFlow<BackupState>(BackupState.Idle)
     val state: StateFlow<BackupState> = _state.asStateFlow()
@@ -52,7 +55,7 @@ class EinstellungenViewModel(
     private fun run(importing: Boolean, block: suspend () -> BackupState) {
         if (_state.value is BackupState.Running) return
         _state.value = BackupState.Running(importing, 0f)
-        viewModelScope.launch(Dispatchers.IO) {
+        (workScope ?: viewModelScope).launch(Dispatchers.IO) {
             _state.value = try {
                 block()
             } catch (e: Exception) {

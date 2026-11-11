@@ -14,6 +14,7 @@ import io.github.katzfuss11.tanzlexikon.transfer.ArchiveError
 import io.github.katzfuss11.tanzlexikon.transfer.ArchiveException
 import io.github.katzfuss11.tanzlexikon.transfer.ArchiveKind
 import io.github.katzfuss11.tanzlexikon.transfer.ArchiveReader
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,6 +47,8 @@ data class EmpfangState(
 class EmpfangViewModel(
     private val repo: LexikonRepository,
     private val galleryWriter: GalleryWriter,
+    /** Hier läuft das Hinzufügen, damit es auch fertig wird, wenn der Bildschirm schon zu ist. */
+    private val workScope: CoroutineScope? = null,
     private val source: () -> InputStream,
 ) : ViewModel() {
     private val _state = MutableStateFlow(EmpfangState())
@@ -118,7 +121,7 @@ class EmpfangViewModel(
         val target = s.target ?: return
         if (s.adding || s.addedFigureId != null || s.figureName.isBlank()) return
         _state.update { it.copy(adding = true) }
-        viewModelScope.launch {
+        (workScope ?: viewModelScope).launch {
             try {
                 val id = withContext(Dispatchers.IO) {
                     val byPath = figure.media.filter { it.file != null }.associateBy { it.file!! }

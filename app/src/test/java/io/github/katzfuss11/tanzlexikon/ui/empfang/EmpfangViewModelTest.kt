@@ -114,6 +114,30 @@ class EmpfangViewModelTest {
         assertEquals("https://youtu.be/dQw4w9WgXcQ", detail.media.single { it.kind == MediaKind.YOUTUBE }.uri)
     }
 
+    @Test fun empfang_screenClosedWhileAdding_figureIsStillAdded() {
+        val rumba = await { repo.observeStart().first().single { it.name == "Latein" }.dances.single { it.name == "Rumba" }.id }
+        val bytes = archive(ArchiveKind.FIGURE, "Latein", "Rumba", "Kreisel")
+        val calls = java.util.concurrent.atomic.AtomicInteger()
+        val screenClosed = java.util.concurrent.CountDownLatch(1)
+        val store = androidx.lifecycle.ViewModelStore()
+        val vm = EmpfangViewModel(repo, GalleryWriter(context.contentResolver), workScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob())) {
+            // Beim Hinzufügen (zweiter Aufruf) erst weiterlesen, wenn der Bildschirm zu ist.
+            if (calls.incrementAndGet() > 1) screenClosed.await()
+            ByteArrayInputStream(bytes)
+        }
+        androidx.lifecycle.ViewModelProvider(store, object : androidx.lifecycle.ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T = vm as T
+        })[EmpfangViewModel::class.java]
+        await { vm.state.first { !it.loading } }
+
+        vm.add()
+        store.clear()
+        screenClosed.countDown()
+
+        assertEquals(listOf("Kreisel"), await { repo.observeFigures(rumba).first { it.isNotEmpty() } }.map { it.name })
+    }
+
     @Test fun empfang_duplicateName_flagsDuplicate_addStillCreatesSecondFigure() {
         val rumba = await { repo.observeStart().first().single { it.name == "Latein" }.dances.single { it.name == "Rumba" }.id }
         await { repo.addFigure(rumba, "Fächer") }

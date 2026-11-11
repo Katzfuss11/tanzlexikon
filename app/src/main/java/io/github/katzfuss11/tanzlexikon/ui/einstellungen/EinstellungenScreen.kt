@@ -1,5 +1,6 @@
 package io.github.katzfuss11.tanzlexikon.ui.einstellungen
 
+import androidx.activity.compose.BackHandler
 import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -57,11 +58,13 @@ import java.util.Locale
 fun EinstellungenScreen(
     onBack: () -> Unit,
     onTrash: () -> Unit,
-    vm: EinstellungenViewModel = appViewModel { EinstellungenViewModel(it.backupService, it.contentResolver) },
+    vm: EinstellungenViewModel = appViewModel { EinstellungenViewModel(it.backupService, it.contentResolver, it.appScope) },
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     var pendingImport by rememberSaveable { mutableStateOf<String?>(null) }
     val running = state is BackupState.Running
+    // Während Export oder Import läuft, führt „Zurück“ nirgendwohin, damit das Ergebnis sichtbar bleibt.
+    BackHandler(enabled = running) {}
 
     // Während Export oder Import läuft, bleibt der Bildschirm an.
     val view = LocalView.current
@@ -78,7 +81,7 @@ fun EinstellungenScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.menu_settings)) }, navigationIcon = { BackButton(onBack) }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.menu_settings)) }, navigationIcon = { if (!running) BackButton(onBack) }) },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
             SectionTitle(stringResource(R.string.settings_appearance))

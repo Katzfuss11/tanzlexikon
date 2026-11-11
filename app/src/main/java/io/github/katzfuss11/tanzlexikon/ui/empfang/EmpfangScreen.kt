@@ -1,5 +1,6 @@
 package io.github.katzfuss11.tanzlexikon.ui.empfang
 
+import androidx.activity.compose.BackHandler
 import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -62,7 +63,7 @@ fun EmpfangScreen(
     onClose: () -> Unit,
     onAdded: (Long) -> Unit,
     vm: EmpfangViewModel = appViewModel(key = "empfang$uri") { app ->
-        EmpfangViewModel(app.repository, app.galleryWriter) {
+        EmpfangViewModel(app.repository, app.galleryWriter, app.appScope) {
             app.contentResolver.openInputStream(uri) ?: throw java.io.IOException("Datei nicht lesbar")
         }
     },
@@ -72,9 +73,11 @@ fun EmpfangScreen(
     var creatingNew by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(s.addedFigureId) { s.addedFigureId?.let(onAdded) }
+    // Während die Figur hinzugefügt wird, führt „Zurück“ nirgendwohin, damit das Ergebnis sichtbar bleibt.
+    BackHandler(enabled = s.adding) {}
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.receive_title)) }, navigationIcon = { BackButton(onClose) }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.receive_title)) }, navigationIcon = { if (!s.adding) BackButton(onClose) }) },
         bottomBar = {
             if (s.figure != null && s.error == null) {
                 Surface(tonalElevation = 3.dp) {
