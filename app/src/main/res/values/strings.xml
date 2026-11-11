@@ -46,6 +46,9 @@
     <!-- Tanz -->
     <string name="new_figure">Neue Figur</string>
     <string name="no_figures_yet">Noch keine Figuren. Tippe auf +, um die erste anzulegen.</string>
+    <string name="no_figures_at_all">Noch keine Figuren. Öffne einen Tanz und tippe auf +, um die erste anzulegen.</string>
+    <string name="show_all_figures">Alle Figuren anzeigen</string>
+    <string name="show_by_dance">Nach Tanz anzeigen</string>
     <string name="to_trash">In den Papierkorb</string>
     <string name="moved_to_trash">In den Papierkorb verschoben</string>
     <string name="undo">Rückgängig</string>

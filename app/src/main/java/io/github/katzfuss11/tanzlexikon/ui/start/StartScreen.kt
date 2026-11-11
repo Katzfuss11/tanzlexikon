@@ -12,13 +12,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.DragHandle
@@ -64,6 +67,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.katzfuss11.tanzlexikon.R
 import io.github.katzfuss11.tanzlexikon.lexikon.CategoryWithDances
 import io.github.katzfuss11.tanzlexikon.lexikon.DanceSummary
+import io.github.katzfuss11.tanzlexikon.lexikon.FigureListItem
 import io.github.katzfuss11.tanzlexikon.ui.NameDialog
 import io.github.katzfuss11.tanzlexikon.ui.appViewModel
 import sh.calvin.reorderable.ReorderableItem
@@ -87,7 +91,7 @@ fun StartScreen(
     onTrash: () -> Unit,
     onSettings: () -> Unit,
     onOpenFigure: (Long) -> Unit,
-    vm: StartViewModel = appViewModel { StartViewModel(it.repository, it.mediaChecker::isAvailable) },
+    vm: StartViewModel = appViewModel { StartViewModel(it.repository, it.mediaChecker::isAvailable, it.startViewSettings) },
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     var showMissing by remember { mutableStateOf(false) }
@@ -123,6 +127,14 @@ fun StartScreen(
                             ordering = false
                         }) { Text(stringResource(R.string.order_done)) }
                     } else {
+                        // Das Symbol zeigt jeweils die andere Ansicht.
+                        IconButton(onClick = vm::toggleView) {
+                            if (state.view == StartView.BY_DANCE) {
+                                Icon(Icons.AutoMirrored.Filled.List, contentDescription = stringResource(R.string.show_all_figures))
+                            } else {
+                                Icon(Icons.Default.Category, contentDescription = stringResource(R.string.show_by_dance))
+                            }
+                        }
                         Box {
                             IconButton(onClick = { menuOpen = true }) {
                                 Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.more))
@@ -130,6 +142,8 @@ fun StartScreen(
                             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                                 DropdownMenuItem(text = { Text(stringResource(R.string.menu_order)) }, onClick = {
                                     menuOpen = false
+                                    // Ordnen geht nur in der Ansicht nach Tanz.
+                                    vm.setView(StartView.BY_DANCE)
                                     orderEntries.clear()
                                     orderEntries.addAll(state.categories.toEntries())
                                     ordering = true
@@ -160,6 +174,14 @@ fun StartScreen(
         Box(Modifier.padding(padding).fillMaxSize()) {
             if (ordering) {
                 OrderList(orderEntries)
+            } else if (state.view == StartView.ALL_FIGURES) {
+                AllFiguresList(
+                    figures = state.allFigures,
+                    missingMediaCount = state.missingMediaCount,
+                    onShowMissing = { showMissing = true },
+                    onSearch = onSearch,
+                    onOpenFigure = onOpenFigure,
+                )
             } else {
                 StartList(
                     categories = state.categories,
@@ -319,23 +341,7 @@ private fun StartList(
     LazyColumn(Modifier.fillMaxSize()) {
         item(key = "search") { SearchField(onSearch) }
         if (missingMediaCount > 0) {
-            item(key = "missing") {
-                Surface(
-                    onClick = onShowMissing,
-                    color = MaterialTheme.colorScheme.errorContainer,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                ) {
-                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
-                        Spacer(Modifier.width(12.dp))
-                        Text(
-                            pluralStringResource(R.plurals.missing_media_hint, missingMediaCount, missingMediaCount),
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                        )
-                    }
-                }
-            }
+            item(key = "missing") { MissingMediaBanner(missingMediaCount, onShowMissing) }
         }
         categories.forEach { category ->
             item(key = "c${category.id}") {
@@ -402,6 +408,59 @@ private fun StartList(
             }
         }
         item(key = "bottom") { Spacer(Modifier.size(88.dp)) }
+    }
+}
+
+/** Alle Figuren nach Namen, darunter klein der Tanz. */
+@Composable
+private fun AllFiguresList(
+    figures: List<FigureListItem>,
+    missingMediaCount: Int,
+    onShowMissing: () -> Unit,
+    onSearch: () -> Unit,
+    onOpenFigure: (Long) -> Unit,
+) {
+    LazyColumn(Modifier.fillMaxSize()) {
+        item(key = "search") { SearchField(onSearch) }
+        if (missingMediaCount > 0) {
+            item(key = "missing") { MissingMediaBanner(missingMediaCount, onShowMissing) }
+        }
+        if (figures.isEmpty()) {
+            item(key = "empty") {
+                Text(
+                    stringResource(R.string.no_figures_at_all),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(16.dp),
+                )
+            }
+        }
+        items(figures, key = { "f${it.id}" }) { f ->
+            ListItem(
+                headlineContent = { Text(f.name) },
+                supportingContent = { Text(f.danceName) },
+                modifier = Modifier.clickable { onOpenFigure(f.id) },
+            )
+        }
+        item(key = "bottom") { Spacer(Modifier.height(88.dp)) }
+    }
+}
+
+@Composable
+private fun MissingMediaBanner(count: Int, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+    ) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
+            Spacer(Modifier.width(12.dp))
+            Text(
+                pluralStringResource(R.plurals.missing_media_hint, count, count),
+                color = MaterialTheme.colorScheme.onErrorContainer,
+            )
+        }
     }
 }
 

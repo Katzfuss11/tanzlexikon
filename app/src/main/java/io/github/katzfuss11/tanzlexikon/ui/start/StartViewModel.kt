@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import io.github.katzfuss11.tanzlexikon.R
 import io.github.katzfuss11.tanzlexikon.data.MediaEntity
 import io.github.katzfuss11.tanzlexikon.lexikon.FigureSummaryRef
+import io.github.katzfuss11.tanzlexikon.lexikon.FigureListItem
 import io.github.katzfuss11.tanzlexikon.lexikon.CategoryWithDances
 import io.github.katzfuss11.tanzlexikon.lexikon.DeleteResult
 import io.github.katzfuss11.tanzlexikon.lexikon.LexikonRepository
@@ -25,6 +26,9 @@ data class StartState(
     @StringRes val message: Int? = null,
     /** Figuren mit mindestens einem fehlenden Medium, für den Hinweis-Dialog. */
     val missingFigures: List<FigureSummaryRef> = emptyList(),
+    val view: StartView = StartView.BY_DANCE,
+    /** Alle Figuren (ohne Papierkorb) für die Ansicht „Alle Figuren“, nach Namen sortiert. */
+    val allFigures: List<FigureListItem> = emptyList(),
 )
 
 private data class Missing(val count: Int = 0, val figures: List<FigureSummaryRef> = emptyList())
@@ -35,13 +39,30 @@ private data class Missing(val count: Int = 0, val figures: List<FigureSummaryRe
 class StartViewModel(
     private val repo: LexikonRepository,
     private val isAvailable: ((MediaEntity) -> Boolean)? = null,
+    /** Merkt sich die Ansicht. null = nur für diese Sitzung (Tests). */
+    private val viewSettings: StartViewSettings? = null,
 ) : ViewModel() {
     private val message = MutableStateFlow<Int?>(null)
     private val missing = MutableStateFlow(Missing())
+    private val view = viewSettings?.view ?: MutableStateFlow(StartView.BY_DANCE)
+    private val localView = MutableStateFlow(view.value)
 
-    val state: StateFlow<StartState> = combine(repo.observeStart(), message, missing) { cats, msg, miss ->
-        StartState(categories = cats, missingMediaCount = miss.count, message = msg, missingFigures = miss.figures)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, StartState(emptyList()))
+    val state: StateFlow<StartState> = combine(
+        repo.observeStart(), message, missing, localView, repo.observeAllFigures(),
+    ) { cats, msg, miss, v, all ->
+        StartState(
+            categories = cats, missingMediaCount = miss.count, message = msg, missingFigures = miss.figures,
+            view = v, allFigures = all,
+        )
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, StartState(emptyList(), view = view.value))
+
+    /** Wechselt zwischen „Nach Tanz“ und „Alle Figuren“. */
+    fun toggleView() = setView(if (localView.value == StartView.BY_DANCE) StartView.ALL_FIGURES else StartView.BY_DANCE)
+
+    fun setView(v: StartView) {
+        localView.value = v
+        viewSettings?.set(v)
+    }
 
     init {
         refreshMissingMedia()
