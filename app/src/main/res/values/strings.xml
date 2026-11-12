@@ -177,8 +177,9 @@
     <string name="update_download_failed">Der Download hat nicht geklappt. Bitte später noch einmal versuchen.</string>
 
     <!-- Teilen und Empfang -->
+    <string name="share_with_media">Videos und Bilder mitschicken</string>
     <string name="share_as_message">Als Nachricht</string>
-    <string name="share_as_message_hint">Text, YouTube-Links und Videos direkt in WhatsApp, Signal &amp; Co.</string>
+    <string name="share_as_message_hint">Text und YouTube-Links direkt in WhatsApp, Signal &amp; Co.</string>
     <string name="share_as_file">Als Tanzlexikon-Datei</string>
     <string name="share_as_file_hint">Eine Datei, die andere mit dem Tanzlexikon öffnen und übernehmen können.</string>
     <string name="packing">Figur wird verpackt …</string>

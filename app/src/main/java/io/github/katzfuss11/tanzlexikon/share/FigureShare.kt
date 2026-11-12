@@ -43,8 +43,9 @@ class FigureShare(
             context.getString(R.string.section_follower),
         )
 
-    /** Text mit YouTube-Links, dazu die eigenen Videos und Bilder, die noch da sind. */
-    suspend fun shareAsMessage(d: FigureDetail) {
+    /** Text mit YouTube-Links, dazu – nur mit [withMedia] – die eigenen Videos und Bilder, die noch da sind. */
+    suspend fun shareAsMessage(figure: FigureDetail, withMedia: Boolean) {
+        val d = figure.forSharing(withMedia)
         val attachments = withContext(Dispatchers.IO) {
             d.media.filter { it.kind != MediaKind.YOUTUBE && mediaChecker.isAvailable(it) }.map { Uri.parse(it.uri) }
         }
@@ -72,9 +73,9 @@ class FigureShare(
         start(intent)
     }
 
-    /** Packt die Figur samt Videos und Bildern in eine .tanzfigur-Datei und öffnet das Teilen-Menü. */
-    suspend fun shareAsFile(d: FigureDetail, shrink: Boolean, onProgress: (PackStage, Float) -> Unit = { _, _ -> }) {
-        val file = writeFigureFile(d, shrink, onProgress)
+    /** Packt die Figur (mit [withMedia] samt Videos und Bildern) in eine .tanzfigur-Datei und öffnet das Teilen-Menü. */
+    suspend fun shareAsFile(d: FigureDetail, withMedia: Boolean, shrink: Boolean, onProgress: (PackStage, Float) -> Unit = { _, _ -> }) {
+        val file = writeFigureFile(d, withMedia, shrink, onProgress)
         val uri = FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.files", file)
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "application/octet-stream"
@@ -87,10 +88,12 @@ class FigureShare(
     }
 
     /**
-     * Schreibt die .tanzfigur-Datei. Mit [shrink] werden große Videos vorher verkleinert;
+     * Schreibt die .tanzfigur-Datei. Ohne [withMedia] bleiben eigene Videos und Bilder ganz draußen
+     * (auch nicht als „fehlt“ vermerkt). Mit [shrink] werden große Videos vorher verkleinert;
      * klappt das bei einem Video nicht, kommt das Original hinein.
      */
-    internal suspend fun writeFigureFile(d: FigureDetail, shrink: Boolean, onProgress: (PackStage, Float) -> Unit): File {
+    internal suspend fun writeFigureFile(figure: FigureDetail, withMedia: Boolean, shrink: Boolean, onProgress: (PackStage, Float) -> Unit): File {
+        val d = figure.forSharing(withMedia)
         val dir = File(context.cacheDir, "share").apply { mkdirs() }
         // Alte Dateien von früherem Teilen wegräumen.
         dir.listFiles()?.forEach { it.deleteRecursively() }
@@ -181,6 +184,16 @@ class FigureShare(
         context.startActivity(chooser)
     }
 }
+
+/** Hat die Figur eigene Videos oder Bilder (nicht nur YouTube-Links)? Nur dann gibt es beim Teilen etwas abzuwählen. */
+fun FigureDetail.hasOwnMedia(): Boolean = media.any { it.kind != MediaKind.YOUTUBE }
+
+/**
+ * Datenschutz: Eigene Videos und Bilder zeigen oft andere Leute. Ohne [withMedia] bleiben
+ * nur die (ohnehin öffentlichen) YouTube-Links übrig.
+ */
+private fun FigureDetail.forSharing(withMedia: Boolean): FigureDetail =
+    if (withMedia) this else copy(media = media.filter { it.kind == MediaKind.YOUTUBE })
 
 /** Woran das Teilen als Datei gerade arbeitet. */
 enum class PackStage { SHRINKING, PACKING }

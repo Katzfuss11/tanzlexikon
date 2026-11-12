@@ -14,11 +14,17 @@ import io.github.katzfuss11.tanzlexikon.transfer.ArchiveReader
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
+import android.app.Application
+import android.content.Intent
+import android.net.Uri
 
 @RunWith(RobolectricTestRunner::class)
 class FigureShareTest {
@@ -69,7 +75,7 @@ class FigureShareTest {
 
     @Test fun writeFigureFile_withShrink_packsSmallVideoAndOriginalImage() = runBlocking {
         val d = detail()
-        val (manifest, files) = read(share { true }.writeFigureFile(d, shrink = true) { _, _ -> })
+        val (manifest, files) = read(share { true }.writeFigureFile(d, withMedia = true, shrink = true) { _, _ -> })
 
         assertEquals(listOf(d.media[0].uri), shrunkSources)
         val media = manifest.categories[0].dances[0].figures[0].media
@@ -82,7 +88,7 @@ class FigureShareTest {
 
     @Test fun writeFigureFile_shrinkFails_packsOriginal() = runBlocking {
         val d = detail()
-        val (manifest, files) = read(share { false }.writeFigureFile(d, shrink = true) { _, _ -> })
+        val (manifest, files) = read(share { false }.writeFigureFile(d, withMedia = true, shrink = true) { _, _ -> })
 
         val media = manifest.categories[0].dances[0].figures[0].media
         assertArrayEquals(video, files[media[0].file])
@@ -91,7 +97,7 @@ class FigureShareTest {
 
     @Test fun shareAsFile_manifestHasNoLinkData() = runBlocking {
         val d = detail().let { it.copy(figure = it.figure.copy(linkGroup = 5, askedName = "fächer")) }
-        val (manifest, _) = read(share { true }.writeFigureFile(d, shrink = false) { _, _ -> })
+        val (manifest, _) = read(share { true }.writeFigureFile(d, withMedia = true, shrink = false) { _, _ -> })
 
         val f = manifest.categories[0].dances[0].figures[0]
         assertEquals(null, f.linkGroup)
@@ -102,9 +108,50 @@ class FigureShareTest {
 
     @Test fun writeFigureFile_withoutShrink_packsOriginalUntouched() = runBlocking {
         val d = detail()
-        val (manifest, files) = read(share { true }.writeFigureFile(d, shrink = false) { _, _ -> })
+        val (manifest, files) = read(share { true }.writeFigureFile(d, withMedia = true, shrink = false) { _, _ -> })
 
         assertEquals(emptyList<String>(), shrunkSources)
         assertArrayEquals(video, files[manifest.categories[0].dances[0].figures[0].media[0].file])
+    }
+
+    @Test fun writeFigureFile_withoutMedia_keepsOnlyYouTubeLinks() = runBlocking {
+        val d = detail()
+        val (manifest, files) = read(share { true }.writeFigureFile(d, withMedia = false, shrink = true) { _, _ -> })
+
+        val media = manifest.categories[0].dances[0].figures[0].media
+        assertEquals(listOf(MediaKind.YOUTUBE), media.map { it.kind })
+        assertEquals("https://youtu.be/dQw4w9WgXcQ", media[0].youtubeUrl)
+        assertEquals(emptyMap<String, ByteArray>(), files)
+        assertEquals(emptyList<String>(), shrunkSources)
+    }
+
+    private fun sentIntent(): Intent {
+        val chooser = shadowOf(context as Application).nextStartedActivity
+        @Suppress("DEPRECATION")
+        return chooser.getParcelableExtra(Intent.EXTRA_INTENT)!!
+    }
+
+    @Test fun shareAsMessage_withoutMedia_sendsOnlyText() = runBlocking {
+        share { true }.shareAsMessage(detail(), withMedia = false)
+
+        val sent = sentIntent()
+        assertEquals(Intent.ACTION_SEND, sent.action)
+        assertEquals("text/plain", sent.type)
+        assertNull(sent.extras?.get(Intent.EXTRA_STREAM))
+        // Android legt den Text selbst als ClipData ab – Dateien dürfen darin aber keine stecken.
+        val clip = sent.clipData
+        assertTrue(clip == null || (0 until clip.itemCount).all { clip.getItemAt(it).uri == null })
+        assertTrue(sent.getStringExtra(Intent.EXTRA_TEXT)!!.contains("https://youtu.be/dQw4w9WgXcQ"))
+    }
+
+    @Test fun shareAsMessage_withMedia_attachesVideoAndImage() = runBlocking {
+        val d = detail()
+        share { true }.shareAsMessage(d, withMedia = true)
+
+        val sent = sentIntent()
+        assertEquals(Intent.ACTION_SEND_MULTIPLE, sent.action)
+        @Suppress("DEPRECATION")
+        val streams = sent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)!!.map { it.toString() }
+        assertEquals(listOf(d.media[0].uri, d.media[1].uri), streams)
     }
 }

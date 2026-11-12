@@ -3,6 +3,9 @@ Wird in der App unter Einstellungen → Über → Versionsverlauf angezeigt.
 Neue Version: oben einen Abschnitt „## Versionsnummer · Datum“ mit Punkten „- …“ ergänzen.
 Ein Test prüft, dass der oberste Abschnitt zur Versionsnummer der App passt.
 
+## 0.1.4
+- Beim Teilen einer Figur kommen eigene Videos und Bilder nur noch mit, wenn „Videos und Bilder mitschicken“ angehakt ist. So landen Aufnahmen, auf denen andere zu sehen sind, nicht aus Versehen bei anderen. YouTube-Links werden weiter immer mitgeschickt.
+
 ## 0.1.3 · 12.11.2026
 - Siehe auch: Figuren lassen sich verknüpfen – dieselbe Figur in anderen Tänzen und verwandte Figuren im selben Tanz. Ein Tipp springt zur verknüpften Figur.
 - Gibt es eine neue Figur unter gleichem Namen schon in anderen Tänzen, schlägt die App vor, sie zu verknüpfen.
