@@ -20,6 +20,7 @@
 
 - [ ] **Zwei Varianten** (product flavors): `play` ohne „Nach Updates suchen“, ohne APK-Download und ohne die Berechtigung `REQUEST_INSTALL_PACKAGES`; `github` wie bisher.
 - [ ] Dieselbe `applicationId` (`io.github.katzfuss11.tanzlexikon`) für beide Varianten, damit ein Wechsel von GitHub zu Play ohne Neuinstallation möglich bleibt.
+- [x] Keine Galerie-Berechtigungen (`READ_MEDIA_*`), die Play-Richtlinie zu Foto- und Video-Berechtigungen verlangt sonst eine Begründung. Auswahl über den Photo Picker, die Kamera schreibt in einen eigenen Galerie-Eintrag (Branch `ohne-galerie-berechtigung`, 14.11.).
 - [ ] Ziel-API auf dem Stand halten, den Play aktuell verlangt (beim Bauen prüfen).
 - [ ] App Bundle (`.aab`) für Play bauen, Versionsverlauf/CLAUDE.md-Regeln beachten.
 
