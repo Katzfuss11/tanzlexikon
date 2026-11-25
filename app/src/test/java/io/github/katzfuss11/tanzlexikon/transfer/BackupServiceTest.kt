@@ -65,7 +65,7 @@ class BackupServiceTest {
         val fig = source.addFigure(rumba(source), "Fächer")
         source.saveFigure(
             fig, "Fächer", emojiText, "Führen", "",
-            listOf(
+            "", listOf(
                 media(fig, videoUri.toString(), MediaKind.VIDEO, name = "fächer.mp4", size = video.size.toLong()),
                 media(fig, "https://youtu.be/dQw4w9WgXcQ", MediaKind.YOUTUBE, Section.LEADER),
             ),
@@ -133,7 +133,7 @@ class BackupServiceTest {
         val video = ByteArray(5000) { 7 }
         val source = newRepo()
         val fig = source.addFigure(rumba(source), "Neu")
-        source.saveFigure(fig, "Neu", "", "", "", listOf(media(fig, gallery.add("neu.mp4", video).toString(), MediaKind.VIDEO, name = "neu.mp4", size = 5000)))
+        source.saveFigure(fig, "Neu", "", "", "", "", listOf(media(fig, gallery.add("neu.mp4", video).toString(), MediaKind.VIDEO, name = "neu.mp4", size = 5000)))
         val archive = export(source)
         gallery.items.clear()
         gallery.failVideoInserts = true
@@ -150,12 +150,12 @@ class BackupServiceTest {
         val mb = 1024L * 1024
         val source = newRepo()
         val fig = source.addFigure(rumba(source), "Neu")
-        source.saveFigure(fig, "Neu", "", "", "", listOf(media(fig, gallery.add("neu.mp4", ByteArray(3000)).toString(), MediaKind.VIDEO, name = "neu.mp4", size = 3000)))
+        source.saveFigure(fig, "Neu", "", "", "", "", listOf(media(fig, gallery.add("neu.mp4", ByteArray(3000)).toString(), MediaKind.VIDEO, name = "neu.mp4", size = 3000)))
         val archive = export(source)
 
         val repo = newRepo()
         val old = repo.addFigure(rumba(repo), "Alt")
-        repo.saveFigure(old, "Alt", "", "", "", listOf(media(old, gallery.add("alt.mp4", ByteArray(2000)).toString(), MediaKind.VIDEO, name = "alt.mp4", size = 2000)))
+        repo.saveFigure(old, "Alt", "", "", "", "", listOf(media(old, gallery.add("alt.mp4", ByteArray(2000)).toString(), MediaKind.VIDEO, name = "alt.mp4", size = 2000)))
         val tight = BackupService(context, repo, GalleryWriter(context.contentResolver), MediaChecker(context.contentResolver),
             availableBytes = { 50 * mb + 3000 + 1999 })
 
@@ -211,6 +211,7 @@ class BackupServiceTest {
         val fig = repo.observeAllFigures().first().single()
         assertEquals("Fächer", fig.name)
         assertEquals(FigureLinks(), repo.observeLinks(fig.id).first())
+        assertEquals("", repo.observeFigure(fig.id).first()!!.figure.noteText)
     }
 
     @Test fun hasEnoughSpace_requires50MbMargin() {
@@ -218,5 +219,18 @@ class BackupServiceTest {
         val s = service(newRepo())
         assertFalse(s.hasEnoughSpace(required = 100 * mb, available = 150 * mb - 1))
         assertTrue(s.hasEnoughSpace(required = 100 * mb, available = 150 * mb))
+    }
+
+    @Test fun exportThenImport_keepsNote() = runTest {
+        val source = newRepo()
+        val fig = source.addFigure(rumba(source), "Fächer")
+        source.saveFigure(fig, "Fächer", "", "", "", "Nicht ziehen 🙂", emptyList())
+        val bytes = export(source)
+
+        val target = newRepo()
+        service(target).import({ ByteArrayInputStream(bytes) }) { _, _ -> }
+
+        val newFig = target.observeFigures(rumba(target)).first().single()
+        assertEquals("Nicht ziehen 🙂", target.observeFigure(newFig.id).first()!!.figure.noteText)
     }
 }

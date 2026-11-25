@@ -18,8 +18,8 @@ import org.robolectric.RobolectricTestRunner
 import java.io.File
 
 /**
- * Prüft das Update von Schema 1 (v0.1.2) auf die aktuelle Version: alte Daten bleiben unverändert.
- * Die alte Datenbank wird genau so angelegt, wie Room sie laut schemas/…/1.json erzeugt hat.
+ * Prüft das Update älterer Schemata (1 = v0.1.2, 2 = v0.1.3) auf die aktuelle Version: alte Daten bleiben unverändert.
+ * Die alte Datenbank wird genau so angelegt, wie Room sie laut schemas/…/<Version>.json erzeugt hat.
  */
 @RunWith(RobolectricTestRunner::class)
 class MigrationTest {
@@ -31,9 +31,9 @@ class MigrationTest {
         context.deleteDatabase(fileName)
     }
 
-    private fun createVersion1Database() {
+    private fun createDatabase(version: Int) {
         val schema = Json.parseToJsonElement(
-            File("schemas/io.github.katzfuss11.tanzlexikon.data.TanzDatabase/1.json").readText(),
+            File("schemas/io.github.katzfuss11.tanzlexikon.data.TanzDatabase/$version.json").readText(),
         ).jsonObject["database"]!!.jsonObject
         dbFile.parentFile!!.mkdirs()
         SQLiteDatabase.openOrCreateDatabase(dbFile, null).use { db ->
@@ -53,14 +53,14 @@ class MigrationTest {
                 "INSERT INTO media (figureId, section, kind, uri, position) " +
                     "VALUES (1, 'GENERAL', 'YOUTUBE', 'https://youtu.be/dQw4w9WgXcQ', 0)",
             )
-            db.version = 1
+            db.version = version
         }
     }
 
     private fun JsonObject.sql(key: String, table: String) = this[key]!!.jsonPrimitive.content.replace("\${TABLE_NAME}", table)
 
     @Test fun migrate1To2_keepsAllData_noLinks() = runBlocking {
-        createVersion1Database()
+        createDatabase(1)
 
         val db = TanzDatabase.build(context, fileName = fileName)
         try {
@@ -75,6 +75,22 @@ class MigrationTest {
                 c.moveToFirst()
                 assertEquals(0, c.getInt(0))
             }
+        } finally {
+            db.close()
+        }
+    }
+
+    @Test fun migrate2To3_keepsAllData_noteEmpty() = runBlocking {
+        createDatabase(2)
+
+        val db = TanzDatabase.build(context, fileName = fileName)
+        try {
+            val figure = db.dao().figure(1)!!
+            assertEquals("Fächer", figure.name)
+            assertEquals("Grundidee 💃", figure.generalText)
+            assertEquals("Führen", figure.leaderText)
+            assertEquals("", figure.noteText)
+            assertEquals(1, db.dao().mediaOf(1).size)
         } finally {
             db.close()
         }

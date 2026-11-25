@@ -130,9 +130,10 @@ class LexikonRepository(private val db: TanzDatabase) {
         generalText: String,
         leaderText: String,
         followerText: String,
+        noteText: String,
         media: List<MediaEntity>,
     ) = db.withTransaction {
-        dao.updateFigureTexts(id, name.trim(), generalText, leaderText, followerText)
+        dao.updateFigureTexts(id, name.trim(), generalText, leaderText, followerText, noteText)
         dao.deleteMediaOf(id)
         media.forEach { dao.insertMedia(it.copy(id = 0, figureId = id)) }
     }
@@ -162,6 +163,7 @@ class LexikonRepository(private val db: TanzDatabase) {
                         key = key,
                         linkGroup = f.linkGroup?.let { groups.getOrPut(it) { groups.size + 1 } },
                         askedName = f.askedName,
+                        noteText = f.noteText,
                         media = dao.mediaOf(f.id).map { m ->
                         val path = if (m.kind != MediaKind.YOUTUBE && isAvailable(m)) {
                             "media/${files.size + 1}.${fileExtension(m)}".also { files += it to m }
@@ -201,7 +203,7 @@ class LexikonRepository(private val db: TanzDatabase) {
             c.dances.forEach { d ->
                 val danceId = dao.insertDance(DanceEntity(categoryId = categoryId, name = d.name, position = d.position))
                 d.figures.forEach { f ->
-                    val id = insertArchFigure(danceId, f, f.position, uriFor)
+                    val id = insertArchFigure(danceId, f, f.position, f.noteText, uriFor)
                     f.key?.let { ids[it] = id }
                     f.linkGroup?.let { g -> dao.setLinkGroup(id, groups.getOrPut(g) { nextGroup++ }) }
                     f.askedName?.let { dao.setAskedName(id, it) }
@@ -215,16 +217,20 @@ class LexikonRepository(private val db: TanzDatabase) {
         }
     }
 
-    /** Hängt eine empfangene Figur ans Ende eines Tanzes. Überschreibt nie etwas. */
+    /**
+     * Hängt eine empfangene Figur ans Ende eines Tanzes. Überschreibt nie etwas.
+     * Eine mitgeschickte Notiz wird verworfen: persönliche Notizen gehören nur dem, der sie schreibt.
+     */
     suspend fun importFigure(danceId: Long, f: ArchFigure, uriFor: (ArchMedia) -> String): Long = db.withTransaction {
-        insertArchFigure(danceId, f, dao.nextFigurePosition(danceId), uriFor)
+        insertArchFigure(danceId, f, dao.nextFigurePosition(danceId), noteText = "", uriFor)
     }
 
-    private suspend fun insertArchFigure(danceId: Long, f: ArchFigure, position: Int, uriFor: (ArchMedia) -> String): Long {
+    private suspend fun insertArchFigure(danceId: Long, f: ArchFigure, position: Int, noteText: String, uriFor: (ArchMedia) -> String): Long {
         val figureId = dao.insertFigure(
             FigureEntity(
                 danceId = danceId, name = f.name, position = position,
                 generalText = f.generalText, leaderText = f.leaderText, followerText = f.followerText,
+                noteText = noteText,
             ),
         )
         f.media.forEach { m ->
@@ -292,7 +298,7 @@ class LexikonRepository(private val db: TanzDatabase) {
         val danceHits = dances.filter { it.name.contains(q, ignoreCase = true) }
             .map { SearchHit(null, it.id, it.name, categories[it.categoryId]?.name.orEmpty()) }
         val figureHits = dao.activeFigures()
-            .filter { f -> listOf(f.name, f.generalText, f.leaderText, f.followerText).any { it.contains(q, ignoreCase = true) } }
+            .filter { f -> listOf(f.name, f.generalText, f.leaderText, f.followerText, f.noteText).any { it.contains(q, ignoreCase = true) } }
             .mapNotNull { f ->
                 val dance = f.danceId?.let { danceById[it] } ?: return@mapNotNull null
                 SearchHit(f.id, dance.id, f.name, dance.name)

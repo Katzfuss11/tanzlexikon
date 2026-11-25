@@ -107,10 +107,10 @@ interface LexikonDao {
     @Query(
         """
         UPDATE figure SET name = :name, generalText = :generalText, leaderText = :leaderText,
-               followerText = :followerText WHERE id = :id
+               followerText = :followerText, noteText = :noteText WHERE id = :id
         """,
     )
-    suspend fun updateFigureTexts(id: Long, name: String, generalText: String, leaderText: String, followerText: String)
+    suspend fun updateFigureTexts(id: Long, name: String, generalText: String, leaderText: String, followerText: String, noteText: String)
 
     @Query("UPDATE figure SET position = :position WHERE id = :id")
     suspend fun setFigurePosition(id: Long, position: Int)

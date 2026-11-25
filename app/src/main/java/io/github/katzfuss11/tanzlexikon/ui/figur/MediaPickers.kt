@@ -1,12 +1,10 @@
 package io.github.katzfuss11.tanzlexikon.ui.figur
 
-import android.Manifest
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.widget.Toast
@@ -32,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import io.github.katzfuss11.tanzlexikon.R
 import io.github.katzfuss11.tanzlexikon.data.MediaKind
+import io.github.katzfuss11.tanzlexikon.media.GalleryWriter
 import io.github.katzfuss11.tanzlexikon.media.youtubeVideoId
 
 /** Liest Name, Typ und Größe einer Datei aus der Galerie. */
@@ -54,20 +53,16 @@ fun readNewMedia(context: Context, uri: Uri): NewMedia {
     return NewMedia(kind, uri.toString(), name, mime, size)
 }
 
-/** Damit die App einen Verweis auf die Galerie auch nach einem Neustart noch lesen darf. */
+/**
+ * Damit die App eine im Photo Picker gewählte Datei auch nach einem Neustart noch lesen darf.
+ * Eine Galerie-Berechtigung braucht die App dafür nicht.
+ */
 private fun keepAccess(context: Context, uri: Uri) {
     try {
         context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
     } catch (_: Exception) {
-        // Nicht jede Quelle erlaubt das (z. B. die Kamera). Dann gilt die Galerie-Berechtigung.
+        // Nicht jede Quelle erlaubt das. Dann bleibt der Zugriff bis zum Neustart der App.
     }
-}
-
-private fun galleryPermissions(): Array<String> = when {
-    Build.VERSION.SDK_INT >= 34 ->
-        arrayOf(Manifest.permission.READ_MEDIA_VIDEO, Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
-    Build.VERSION.SDK_INT >= 33 -> arrayOf(Manifest.permission.READ_MEDIA_VIDEO, Manifest.permission.READ_MEDIA_IMAGES)
-    else -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
 }
 
 /** Die drei Wege, ein Medium hinzuzufügen. */
@@ -86,23 +81,50 @@ fun rememberMediaAdder(onPicked: (List<NewMedia>) -> Unit): MediaAdder {
     val callback by rememberUpdatedState(onPicked)
     val noCamera = stringResource(R.string.no_camera)
 
+    val gallery = remember { GalleryWriter(context.contentResolver) }
+    // Der Eintrag, in den die Kamera gerade schreibt. Gespeichert, falls Android die App
+    // während der Aufnahme beendet.
+    var recording by rememberSaveable { mutableStateOf<String?>(null) }
+
     val capture = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val uri = result.data?.data
-        if (result.resultCode == Activity.RESULT_OK && uri != null) {
-            keepAccess(context, uri)
-            callback(listOf(readNewMedia(context, uri).copy(kind = MediaKind.VIDEO)))
+        val own = recording?.let(Uri::parse)
+        recording = null
+        val returned = result.data?.data
+        when {
+            result.resultCode != Activity.RESULT_OK -> own?.let(gallery::discard)
+            own != null && gallery.hasContent(own) ->
+                callback(listOf(readNewMedia(context, own).copy(kind = MediaKind.VIDEO)))
+            returned != null -> {
+                // Manche Kamera-Apps übergehen EXTRA_OUTPUT und speichern selbst. Dann bleibt
+                // das Video nur lesbar, solange Android den Zugriff darauf nicht zurücknimmt.
+                own?.let(gallery::discard)
+                keepAccess(context, returned)
+                callback(listOf(readNewMedia(context, returned).copy(kind = MediaKind.VIDEO)))
+            }
+            else -> own?.let(gallery::discard)
         }
     }
     fun startCamera() {
-        // Ohne EXTRA_OUTPUT: die Kamera-App legt das Video selbst in der Galerie ab.
+        // Die Kamera schreibt in einen Eintrag, der der App gehört. So kann sie das Video
+        // ohne Galerie-Berechtigung abspielen, auch nach einem Neustart.
+        val target = try {
+            gallery.newRecording()
+        } catch (_: Exception) {
+            Toast.makeText(context, noCamera, Toast.LENGTH_LONG).show()
+            return
+        }
+        val intent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
+            .putExtra(MediaStore.EXTRA_OUTPUT, target)
+            .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
         try {
-            capture.launch(Intent(MediaStore.ACTION_VIDEO_CAPTURE))
+            recording = target.toString()
+            capture.launch(intent)
         } catch (_: ActivityNotFoundException) {
+            recording = null
+            gallery.discard(target)
             Toast.makeText(context, noCamera, Toast.LENGTH_LONG).show()
         }
     }
-    // Erst die Leseberechtigung erfragen, damit das Video auch später noch abspielbar ist.
-    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { startCamera() }
 
     val pickMany = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
         if (uris.isNotEmpty()) {
@@ -120,7 +142,7 @@ fun rememberMediaAdder(onPicked: (List<NewMedia>) -> Unit): MediaAdder {
 
     return remember {
         MediaAdder(
-            recordVideo = { permission.launch(galleryPermissions()) },
+            recordVideo = { startCamera() },
             pickFromGallery = { pickMany.launch(request) },
             pickOne = { pickSingle.launch(request) },
         )

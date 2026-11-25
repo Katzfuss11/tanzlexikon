@@ -32,6 +32,8 @@ data class FigurDraft(
     val generalText: String,
     val leaderText: String,
     val followerText: String,
+    /** Persönliche Notiz. Mit Standard, damit vor dem Update gespeicherte Entwürfe lesbar bleiben. */
+    val noteText: String = "",
     val media: List<MediaEntity>,
     /** „Siehe auch“, wie es nach dem Speichern sein soll. */
     val links: FigureLinks = FigureLinks(),
@@ -203,7 +205,7 @@ class FigurViewModel(
         viewModelScope.launch {
             // Verweise zuerst: wird zugleich umbenannt, gilt „schon gefragt“ beim Lösen noch für den alten Namen.
             repo.saveLinkChanges(figureId, from = draft.baseLinks, to = draft.links)
-            repo.saveFigure(figureId, draft.name, draft.generalText, draft.leaderText, draft.followerText, media)
+            repo.saveFigure(figureId, draft.name, draft.generalText, draft.leaderText, draft.followerText, draft.noteText, media)
             // Erst nach dem Speichern: passt der Name zu Figuren in anderen Tänzen, einmal fragen.
             suggestion.value = repo.linkSuggestion(figureId)
             edit.value = EditState()
@@ -223,7 +225,10 @@ class FigurViewModel(
         val json = Json { ignoreUnknownKeys = true }
 
         fun draftOf(d: FigureDetail, links: FigureLinks) =
-            FigurDraft(d.figure.name, d.figure.generalText, d.figure.leaderText, d.figure.followerText, d.media, links, baseLinks = links)
+            FigurDraft(
+                d.figure.name, d.figure.generalText, d.figure.leaderText, d.figure.followerText,
+                noteText = d.figure.noteText, media = d.media, links = links, baseLinks = links,
+            )
 
         fun decodeDraft(text: String): FigurDraft? =
             runCatching { json.decodeFromString(FigurDraft.serializer(), text) }.getOrNull()

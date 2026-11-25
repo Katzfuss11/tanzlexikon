@@ -83,6 +83,9 @@
     <string name="section_general">Allgemein</string>
     <string name="section_leader">Leader</string>
     <string name="section_follower">Follower</string>
+    <string name="notes_title">Meine Notizen</string>
+    <string name="notes_not_shared">„Meine Notizen“ werden nicht mitgeschickt.</string>
+    <string name="notes_hint">Worauf ich achten will</string>
     <string name="name_required">Bitte gib der Figur einen Namen.</string>
     <string name="figure_empty">Noch nichts eingetragen. Tippe auf den Stift, um Beschreibungen zu ergänzen.</string>
     <string name="text_hint">Beschreibung</string>
@@ -177,8 +180,9 @@
     <string name="update_download_failed">Der Download hat nicht geklappt. Bitte später noch einmal versuchen.</string>
 
     <!-- Teilen und Empfang -->
+    <string name="share_with_media">Videos und Bilder mitschicken</string>
     <string name="share_as_message">Als Nachricht</string>
-    <string name="share_as_message_hint">Text, YouTube-Links und Videos direkt in WhatsApp, Signal &amp; Co.</string>
+    <string name="share_as_message_hint">Text und YouTube-Links direkt in WhatsApp, Signal &amp; Co.</string>
     <string name="share_as_file">Als Tanzlexikon-Datei</string>
     <string name="share_as_file_hint">Eine Datei, die andere mit dem Tanzlexikon öffnen und übernehmen können.</string>
     <string name="packing">Figur wird verpackt …</string>

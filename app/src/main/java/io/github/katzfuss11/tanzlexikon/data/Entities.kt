@@ -1,5 +1,6 @@
 package io.github.katzfuss11.tanzlexikon.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -59,6 +60,8 @@ data class FigureEntity(
     val generalText: String = "",
     val leaderText: String = "",
     val followerText: String = "",
+    /** Persönliche Notiz. Wird nie geteilt, steckt aber in der Sicherung. */
+    @ColumnInfo(defaultValue = "") val noteText: String = "",
     val trashedAt: Long? = null,
     val trashedDanceName: String? = null,
     val trashedCategoryName: String? = null,

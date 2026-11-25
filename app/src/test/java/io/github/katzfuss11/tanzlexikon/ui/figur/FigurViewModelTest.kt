@@ -48,7 +48,7 @@ class FigurViewModelTest {
         figureId = await {
             val rumba = repo.observeStart().first().single { it.name == "Latein" }.dances.single { it.name == "Rumba" }.id
             val id = repo.addFigure(rumba, "Fächer")
-            repo.saveFigure(id, "Fächer", "Grundidee", "Führen", "", emptyList())
+            repo.saveFigure(id, "Fächer", "Grundidee", "Führen", "", "", emptyList())
             id
         }
         vm = FigurViewModel(repo, figureId).also(created::add)
@@ -347,5 +347,26 @@ class FigurViewModelTest {
 
         val s = await { vm.state.first { !it.editing } }
         assertEquals(listOf("Salsa"), s.suggestion?.candidates?.map { it.danceName })
+    }
+
+    @Test fun edit_thenSave_storesNote_andNextEditStartsWithIt() {
+        vm.startEditing()
+        vm.updateDraft { it.copy(noteText = "Arm tiefer") }
+        vm.save()
+
+        val s = await { vm.state.first { !it.editing && it.detail?.figure?.noteText == "Arm tiefer" } }
+        assertEquals("Grundidee", s.detail!!.figure.generalText)
+        vm.startEditing()
+        assertEquals("Arm tiefer", vm.state.value.draft!!.noteText)
+    }
+
+    @Test fun oldSavedDraftWithoutNote_isRestored() {
+        // So lag ein Entwurf vor dem Update im gesicherten Zustand: ohne noteText.
+        val old = """{"name":"Fächer","generalText":"Alt gespeichert","leaderText":"","followerText":"","media":[]}"""
+        val second = recreated(SavedStateHandle(mapOf("entwurf" to old)))
+
+        assertTrue(second.state.value.editing)
+        assertEquals("Alt gespeichert", second.state.value.draft!!.generalText)
+        assertEquals("", second.state.value.draft!!.noteText)
     }
 }

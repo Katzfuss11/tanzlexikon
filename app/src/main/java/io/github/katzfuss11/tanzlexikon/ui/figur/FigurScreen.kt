@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -63,6 +65,10 @@ import io.github.katzfuss11.tanzlexikon.R
 import io.github.katzfuss11.tanzlexikon.data.MediaEntity
 import io.github.katzfuss11.tanzlexikon.data.MediaKind
 import io.github.katzfuss11.tanzlexikon.share.PackStage
+import io.github.katzfuss11.tanzlexikon.share.hasOwnMedia
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.Alignment
 import android.text.format.Formatter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -89,20 +95,22 @@ fun FigurScreen(
     val app = LocalContext.current.applicationContext as TanzlexikonApp
     val scope = rememberCoroutineScope()
     var sharing by remember { mutableStateOf(false) }
+    // Datenschutz: Eigene Videos und Bilder kommen nur mit, wenn das Häkchen bewusst gesetzt wird.
+    var withMedia by remember { mutableStateOf(false) }
     var packing by remember { mutableStateOf(false) }
     var packProgress by remember { mutableStateOf(0f) }
     var packStage by remember { mutableStateOf(PackStage.PACKING) }
     var packJob by remember { mutableStateOf<Job?>(null) }
     var askQuality by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    fun packAndShare(shrink: Boolean) {
+    fun packAndShare(withMedia: Boolean, shrink: Boolean) {
         val d = state.detail ?: return
         packing = true
         packProgress = 0f
         packStage = if (shrink) PackStage.SHRINKING else PackStage.PACKING
         packJob = scope.launch {
             try {
-                app.figureShare.shareAsFile(d, shrink) { stage, p ->
+                app.figureShare.shareAsFile(d, withMedia = withMedia, shrink = shrink) { stage, p ->
                     packStage = stage
                     packProgress = p
                 }
@@ -126,14 +134,14 @@ fun FigurScreen(
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.quality_small)) },
                         supportingContent = { Text(stringResource(R.string.quality_small_hint)) },
-                        modifier = Modifier.clickable { askQuality = false; packAndShare(shrink = true) },
+                        modifier = Modifier.clickable { askQuality = false; packAndShare(withMedia = true, shrink = true) },
                     )
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.quality_original)) },
                         supportingContent = {
                             Text(stringResource(R.string.quality_original_hint, Formatter.formatShortFileSize(context, videoBytes)))
                         },
-                        modifier = Modifier.clickable { askQuality = false; packAndShare(shrink = false) },
+                        modifier = Modifier.clickable { askQuality = false; packAndShare(withMedia = true, shrink = false) },
                     )
                 }
             },
@@ -147,12 +155,24 @@ fun FigurScreen(
             title = { Text(stringResource(R.string.share)) },
             text = {
                 Column {
+                    if (state.detail?.hasOwnMedia() == true) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .toggleable(value = withMedia, role = Role.Checkbox, onValueChange = { withMedia = it }),
+                        ) {
+                            Checkbox(checked = withMedia, onCheckedChange = null)
+                            Spacer(Modifier.width(12.dp))
+                            Text(stringResource(R.string.share_with_media))
+                        }
+                    }
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.share_as_message)) },
                         supportingContent = { Text(stringResource(R.string.share_as_message_hint)) },
                         modifier = Modifier.clickable {
                             sharing = false
-                            state.detail?.let { d -> scope.launch { app.figureShare.shareAsMessage(d) } }
+                            state.detail?.let { d -> scope.launch { app.figureShare.shareAsMessage(d, withMedia = withMedia) } }
                         },
                     )
                     ListItem(
@@ -160,11 +180,19 @@ fun FigurScreen(
                         supportingContent = { Text(stringResource(R.string.share_as_file_hint)) },
                         modifier = Modifier.clickable {
                             sharing = false
-                            // Nur bei Videos lohnt die Frage nach der Qualität.
-                            if (state.detail?.media.orEmpty().any { it.kind == MediaKind.VIDEO }) askQuality = true
-                            else packAndShare(shrink = false)
+                            // Nur wenn Videos mitkommen, lohnt die Frage nach der Qualität.
+                            if (withMedia && state.detail?.media.orEmpty().any { it.kind == MediaKind.VIDEO }) askQuality = true
+                            else packAndShare(withMedia = withMedia, shrink = false)
                         },
                     )
+                    if (state.detail?.figure?.noteText?.isNotBlank() == true) {
+                        Text(
+                            stringResource(R.string.notes_not_shared),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                    }
                 }
             },
             confirmButton = {},
@@ -255,7 +283,7 @@ fun FigurScreen(
                         IconButton(onClick = vm::startEditing) {
                             Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
                         }
-                        IconButton(onClick = { sharing = true }, enabled = state.detail != null && !packing) {
+                        IconButton(onClick = { withMedia = false; sharing = true }, enabled = state.detail != null && !packing) {
                             Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share))
                         }
                         IconButton(onClick = { menu = true }) {
@@ -319,6 +347,15 @@ fun FigurScreen(
                         )
                     }
                 }
+                NotesCard {
+                    OutlinedTextField(
+                        value = draft.noteText,
+                        onValueChange = { v -> vm.updateDraft { it.copy(noteText = v) } },
+                        placeholder = { Text(stringResource(R.string.notes_hint)) },
+                        minLines = 3,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 SeeAlsoSection(
                     links = draft.links, editing = true,
                     onOpen = {}, onRemove = vm::removeLink, onAdd = { pickingLink = true },
@@ -328,7 +365,7 @@ fun FigurScreen(
                 val texts = mapOf(Section.GENERAL to f.generalText, Section.LEADER to f.leaderText, Section.FOLLOWER to f.followerText)
                 // Ein Bereich ohne Text und ohne Medien wird nicht angezeigt.
                 val visible = Section.entries.filter { s -> texts[s]!!.isNotBlank() || detail.media.any { it.section == s } }
-                if (visible.isEmpty()) {
+                if (visible.isEmpty() && f.noteText.isBlank()) {
                     Text(stringResource(R.string.figure_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 visible.forEach { section ->
@@ -336,6 +373,9 @@ fun FigurScreen(
                         if (texts[section]!!.isNotBlank()) Text(texts[section]!!, style = MaterialTheme.typography.bodyLarge)
                         MediaSection(media = detail.media.filter { it.section == section }, editing = false)
                     }
+                }
+                if (f.noteText.isNotBlank()) {
+                    NotesCard { Text(f.noteText, style = MaterialTheme.typography.bodyLarge) }
                 }
                 SeeAlsoSection(
                     links = state.links, editing = false,
@@ -414,6 +454,23 @@ fun SectionCard(section: Section, content: @Composable () -> Unit) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 sectionTitle(section),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = accent,
+            )
+            content()
+        }
+    }
+}
+
+/** Der private Bereich „Meine Notizen“ in neutraler Farbe. Dass er nicht geteilt wird, sagt der Teilen-Dialog. */
+@Composable
+private fun NotesCard(content: @Composable () -> Unit) {
+    val accent = MaterialTheme.colorScheme.onSurfaceVariant
+    Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                stringResource(R.string.notes_title),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = accent,

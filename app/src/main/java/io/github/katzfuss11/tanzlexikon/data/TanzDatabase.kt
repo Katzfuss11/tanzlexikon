@@ -10,10 +10,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [CategoryEntity::class, DanceEntity::class, FigureEntity::class, MediaEntity::class, FigureLinkEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = true,
     // 1 → 2: Verweise (Spalten linkGroup, askedName und Tabelle figure_link). Alte Daten bleiben unverändert.
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    // 2 → 3: Spalte noteText (persönliche Notiz), Standard leer.
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 @TypeConverters(Converters::class)
 abstract class TanzDatabase : RoomDatabase() {
