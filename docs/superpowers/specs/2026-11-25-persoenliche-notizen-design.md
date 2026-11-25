@@ -25,9 +25,10 @@ Ein eigener Bereich pro Figur, in dem man festhält, worauf man selbst besser ac
 
 ## Verhalten
 
-- **Anzeige:** Abschnitt „Meine Notizen“ mit Schloss-Symbol, neutrale (graue) Farbe, darunter
-  klein „Wird nicht geteilt“. Steht nach Follower, vor „Siehe auch“. Leer → beim Ansehen
-  ausgeblendet; beim Bearbeiten immer da.
+- **Anzeige:** Abschnitt „Meine Notizen“ in neutraler Farbe, ohne Schloss und ohne Hinweis
+  (Nutzerwunsch 25.11.: die Info ist nur beim Teilen wichtig). Steht nach Follower, vor „Siehe auch“.
+  Leer → beim Ansehen ausgeblendet; beim Bearbeiten immer da.
+- **Teilen-Dialog:** Hat die Figur eine Notiz, steht unten „„Meine Notizen“ werden nicht mitgeschickt.“
 - **Nur Text**, kein „Medium hinzufügen“.
 - **Teilen:** weder im geteilten Text noch in der `.tanzfigur`-Datei. Empfangene Figuren haben
   leere Notizen.

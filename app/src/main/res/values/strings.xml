@@ -84,7 +84,7 @@
     <string name="section_leader">Leader</string>
     <string name="section_follower">Follower</string>
     <string name="notes_title">Meine Notizen</string>
-    <string name="notes_private">Wird nicht geteilt</string>
+    <string name="notes_not_shared">„Meine Notizen“ werden nicht mitgeschickt.</string>
     <string name="notes_hint">Worauf ich achten will</string>
     <string name="name_required">Bitte gib der Figur einen Namen.</string>
     <string name="figure_empty">Noch nichts eingetragen. Tippe auf den Stift, um Beschreibungen zu ergänzen.</string>

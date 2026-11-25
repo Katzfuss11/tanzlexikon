@@ -12,14 +12,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.Edit
@@ -187,6 +185,14 @@ fun FigurScreen(
                             else packAndShare(withMedia = withMedia, shrink = false)
                         },
                     )
+                    if (state.detail?.figure?.noteText?.isNotBlank() == true) {
+                        Text(
+                            stringResource(R.string.notes_not_shared),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                    }
                 }
             },
             confirmButton = {},
@@ -457,24 +463,19 @@ fun SectionCard(section: Section, content: @Composable () -> Unit) {
     }
 }
 
-/** Der private Bereich „Meine Notizen“: neutral grau, mit Schloss und dem Hinweis, dass er nicht geteilt wird. */
+/** Der private Bereich „Meine Notizen“ in neutraler Farbe. Dass er nicht geteilt wird, sagt der Teilen-Dialog. */
 @Composable
 private fun NotesCard(content: @Composable () -> Unit) {
     val accent = MaterialTheme.colorScheme.onSurfaceVariant
     Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Lock, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    stringResource(R.string.notes_title),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = accent,
-                )
-            }
+            Text(
+                stringResource(R.string.notes_title),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = accent,
+            )
             content()
-            Text(stringResource(R.string.notes_private), style = MaterialTheme.typography.labelSmall, color = accent)
         }
     }
 }
