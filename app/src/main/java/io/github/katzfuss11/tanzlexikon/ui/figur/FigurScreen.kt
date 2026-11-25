@@ -12,12 +12,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.Edit
@@ -339,6 +341,15 @@ fun FigurScreen(
                         )
                     }
                 }
+                NotesCard {
+                    OutlinedTextField(
+                        value = draft.noteText,
+                        onValueChange = { v -> vm.updateDraft { it.copy(noteText = v) } },
+                        placeholder = { Text(stringResource(R.string.notes_hint)) },
+                        minLines = 3,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 SeeAlsoSection(
                     links = draft.links, editing = true,
                     onOpen = {}, onRemove = vm::removeLink, onAdd = { pickingLink = true },
@@ -348,7 +359,7 @@ fun FigurScreen(
                 val texts = mapOf(Section.GENERAL to f.generalText, Section.LEADER to f.leaderText, Section.FOLLOWER to f.followerText)
                 // Ein Bereich ohne Text und ohne Medien wird nicht angezeigt.
                 val visible = Section.entries.filter { s -> texts[s]!!.isNotBlank() || detail.media.any { it.section == s } }
-                if (visible.isEmpty()) {
+                if (visible.isEmpty() && f.noteText.isBlank()) {
                     Text(stringResource(R.string.figure_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 visible.forEach { section ->
@@ -356,6 +367,9 @@ fun FigurScreen(
                         if (texts[section]!!.isNotBlank()) Text(texts[section]!!, style = MaterialTheme.typography.bodyLarge)
                         MediaSection(media = detail.media.filter { it.section == section }, editing = false)
                     }
+                }
+                if (f.noteText.isNotBlank()) {
+                    NotesCard { Text(f.noteText, style = MaterialTheme.typography.bodyLarge) }
                 }
                 SeeAlsoSection(
                     links = state.links, editing = false,
@@ -439,6 +453,28 @@ fun SectionCard(section: Section, content: @Composable () -> Unit) {
                 color = accent,
             )
             content()
+        }
+    }
+}
+
+/** Der private Bereich „Meine Notizen“: neutral grau, mit Schloss und dem Hinweis, dass er nicht geteilt wird. */
+@Composable
+private fun NotesCard(content: @Composable () -> Unit) {
+    val accent = MaterialTheme.colorScheme.onSurfaceVariant
+    Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Lock, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    stringResource(R.string.notes_title),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = accent,
+                )
+            }
+            content()
+            Text(stringResource(R.string.notes_private), style = MaterialTheme.typography.labelSmall, color = accent)
         }
     }
 }
