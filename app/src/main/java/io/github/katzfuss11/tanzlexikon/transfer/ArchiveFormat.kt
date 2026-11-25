@@ -46,6 +46,8 @@ data class ArchFigure(
     val linkGroup: Int? = null,
     /** Name, für den schon Verknüpfen vorgeschlagen wurde. */
     val askedName: String? = null,
+    /** Persönliche Notiz. Nur in Sicherungen; beim Empfang einer Figur ignoriert. */
+    val noteText: String = "",
 )
 
 /**

@@ -44,4 +44,14 @@ class ShareTextTest {
         val text = buildShareText(d, labels)
         assertTrue(text.startsWith("Wiener Walzer – Schulterdrehung 💃\n\nFollower:\nÜber die Schulter – ölig"))
     }
+
+    @Test fun shareText_neverContainsNote() {
+        val d = FigureDetail(
+            figure = FigureEntity(id = 1, danceId = 1, name = "Fächer", position = 0, generalText = "Grundidee", noteText = "GEHEIM-123"),
+            danceName = "Rumba",
+            categoryName = "Latein",
+            media = emptyList(),
+        )
+        assertTrue(!buildShareText(d, labels).contains("GEHEIM-123"))
+    }
 }

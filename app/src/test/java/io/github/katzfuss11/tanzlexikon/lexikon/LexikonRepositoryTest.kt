@@ -195,4 +195,14 @@ class LexikonRepositoryTest {
         repo.restoreFigure(fig)
         assertEquals("Nicht ziehen", repo.observeFigure(fig).first()!!.figure.noteText)
     }
+
+    @Test fun importFigure_ignoresNoteInFile() = runTest {
+        val rumba = dance("Latein", "Rumba").id
+        val arch = io.github.katzfuss11.tanzlexikon.transfer.ArchFigure(
+            name = "Fächer", position = 0, generalText = "", leaderText = "", followerText = "",
+            media = emptyList(), noteText = "fremd",
+        )
+        val id = repo.importFigure(rumba, arch) { "" }
+        assertEquals("", repo.observeFigure(id).first()!!.figure.noteText)
+    }
 }

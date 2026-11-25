@@ -211,6 +211,7 @@ class BackupServiceTest {
         val fig = repo.observeAllFigures().first().single()
         assertEquals("Fächer", fig.name)
         assertEquals(FigureLinks(), repo.observeLinks(fig.id).first())
+        assertEquals("", repo.observeFigure(fig.id).first()!!.figure.noteText)
     }
 
     @Test fun hasEnoughSpace_requires50MbMargin() {
@@ -218,5 +219,18 @@ class BackupServiceTest {
         val s = service(newRepo())
         assertFalse(s.hasEnoughSpace(required = 100 * mb, available = 150 * mb - 1))
         assertTrue(s.hasEnoughSpace(required = 100 * mb, available = 150 * mb))
+    }
+
+    @Test fun exportThenImport_keepsNote() = runTest {
+        val source = newRepo()
+        val fig = source.addFigure(rumba(source), "Fächer")
+        source.saveFigure(fig, "Fächer", "", "", "", "Nicht ziehen 🙂", emptyList())
+        val bytes = export(source)
+
+        val target = newRepo()
+        service(target).import({ ByteArrayInputStream(bytes) }) { _, _ -> }
+
+        val newFig = target.observeFigures(rumba(target)).first().single()
+        assertEquals("Nicht ziehen 🙂", target.observeFigure(newFig.id).first()!!.figure.noteText)
     }
 }

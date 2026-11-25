@@ -14,6 +14,7 @@ import io.github.katzfuss11.tanzlexikon.transfer.ArchiveReader
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -153,5 +154,16 @@ class FigureShareTest {
         @Suppress("DEPRECATION")
         val streams = sent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)!!.map { it.toString() }
         assertEquals(listOf(d.media[0].uri, d.media[1].uri), streams)
+    }
+
+    @Test fun writeFigureFile_neverContainsNote() = runBlocking {
+        val d = detail().let { it.copy(figure = it.figure.copy(noteText = "GEHEIM-123")) }
+        for (withMedia in listOf(true, false)) {
+            val file = share { true }.writeFigureFile(d, withMedia = withMedia, shrink = false) { _, _ -> }
+            val (manifest, _) = read(file)
+            assertEquals("", manifest.categories[0].dances[0].figures[0].noteText)
+            val rawJson = java.util.zip.ZipFile(file).use { z -> z.getInputStream(z.getEntry("tanzlexikon.json")).readBytes().decodeToString() }
+            assertFalse(rawJson.contains("GEHEIM-123"))
+        }
     }
 }
