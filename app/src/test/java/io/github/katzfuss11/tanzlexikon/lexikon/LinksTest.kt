@@ -76,7 +76,7 @@ class LinksTest {
         val b = fig("Rumba", "Crossbody Lead")
         repo.answerSuggestion(b, listOf(fig("Salsa", "Crossbody Lead")), link = false)
 
-        repo.saveFigure(b, "Hammerlock", "", "", "", emptyList())
+        repo.saveFigure(b, "Hammerlock", "", "", "", "", emptyList())
 
         assertEquals(listOf(hammer), repo.linkSuggestion(b)!!.candidates.map { it.id })
     }

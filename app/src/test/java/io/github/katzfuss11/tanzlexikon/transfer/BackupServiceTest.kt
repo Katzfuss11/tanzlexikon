@@ -65,7 +65,7 @@ class BackupServiceTest {
         val fig = source.addFigure(rumba(source), "Fächer")
         source.saveFigure(
             fig, "Fächer", emojiText, "Führen", "",
-            listOf(
+            "", listOf(
                 media(fig, videoUri.toString(), MediaKind.VIDEO, name = "fächer.mp4", size = video.size.toLong()),
                 media(fig, "https://youtu.be/dQw4w9WgXcQ", MediaKind.YOUTUBE, Section.LEADER),
             ),
@@ -133,7 +133,7 @@ class BackupServiceTest {
         val video = ByteArray(5000) { 7 }
         val source = newRepo()
         val fig = source.addFigure(rumba(source), "Neu")
-        source.saveFigure(fig, "Neu", "", "", "", listOf(media(fig, gallery.add("neu.mp4", video).toString(), MediaKind.VIDEO, name = "neu.mp4", size = 5000)))
+        source.saveFigure(fig, "Neu", "", "", "", "", listOf(media(fig, gallery.add("neu.mp4", video).toString(), MediaKind.VIDEO, name = "neu.mp4", size = 5000)))
         val archive = export(source)
         gallery.items.clear()
         gallery.failVideoInserts = true
@@ -150,12 +150,12 @@ class BackupServiceTest {
         val mb = 1024L * 1024
         val source = newRepo()
         val fig = source.addFigure(rumba(source), "Neu")
-        source.saveFigure(fig, "Neu", "", "", "", listOf(media(fig, gallery.add("neu.mp4", ByteArray(3000)).toString(), MediaKind.VIDEO, name = "neu.mp4", size = 3000)))
+        source.saveFigure(fig, "Neu", "", "", "", "", listOf(media(fig, gallery.add("neu.mp4", ByteArray(3000)).toString(), MediaKind.VIDEO, name = "neu.mp4", size = 3000)))
         val archive = export(source)
 
         val repo = newRepo()
         val old = repo.addFigure(rumba(repo), "Alt")
-        repo.saveFigure(old, "Alt", "", "", "", listOf(media(old, gallery.add("alt.mp4", ByteArray(2000)).toString(), MediaKind.VIDEO, name = "alt.mp4", size = 2000)))
+        repo.saveFigure(old, "Alt", "", "", "", "", listOf(media(old, gallery.add("alt.mp4", ByteArray(2000)).toString(), MediaKind.VIDEO, name = "alt.mp4", size = 2000)))
         val tight = BackupService(context, repo, GalleryWriter(context.contentResolver), MediaChecker(context.contentResolver),
             availableBytes = { 50 * mb + 3000 + 1999 })
 

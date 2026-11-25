@@ -130,9 +130,10 @@ class LexikonRepository(private val db: TanzDatabase) {
         generalText: String,
         leaderText: String,
         followerText: String,
+        noteText: String,
         media: List<MediaEntity>,
     ) = db.withTransaction {
-        dao.updateFigureTexts(id, name.trim(), generalText, leaderText, followerText)
+        dao.updateFigureTexts(id, name.trim(), generalText, leaderText, followerText, noteText)
         dao.deleteMediaOf(id)
         media.forEach { dao.insertMedia(it.copy(id = 0, figureId = id)) }
     }
@@ -292,7 +293,7 @@ class LexikonRepository(private val db: TanzDatabase) {
         val danceHits = dances.filter { it.name.contains(q, ignoreCase = true) }
             .map { SearchHit(null, it.id, it.name, categories[it.categoryId]?.name.orEmpty()) }
         val figureHits = dao.activeFigures()
-            .filter { f -> listOf(f.name, f.generalText, f.leaderText, f.followerText).any { it.contains(q, ignoreCase = true) } }
+            .filter { f -> listOf(f.name, f.generalText, f.leaderText, f.followerText, f.noteText).any { it.contains(q, ignoreCase = true) } }
             .mapNotNull { f ->
                 val dance = f.danceId?.let { danceById[it] } ?: return@mapNotNull null
                 SearchHit(f.id, dance.id, f.name, dance.name)

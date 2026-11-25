@@ -53,14 +53,14 @@ class MissingMediaTest {
             val active = repo.addFigure(rumba, "Fächer")
             repo.saveFigure(
                 active, "Fächer", "", "", "",
-                listOf(
+                "", listOf(
                     media(active, "content://weg/1"),
                     media(active, "content://da/2", position = 1),
                     media(active, "https://youtu.be/dQw4w9WgXcQ", MediaKind.YOUTUBE, position = 2),
                 ),
             )
             val trashed = repo.addFigure(rumba, "Alt")
-            repo.saveFigure(trashed, "Alt", "", "", "", listOf(media(trashed, "content://weg/3")))
+            repo.saveFigure(trashed, "Alt", "", "", "", "", listOf(media(trashed, "content://weg/3")))
             repo.trashFigure(trashed, 1L)
         }
 

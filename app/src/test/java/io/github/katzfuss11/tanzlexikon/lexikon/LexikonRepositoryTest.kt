@@ -128,13 +128,13 @@ class LexikonRepositoryTest {
         val rumba = dance("Latein", "Rumba").id
         val a = repo.addFigure(rumba, "Fächer")
         val b = repo.addFigure(rumba, "Hockeystick")
-        repo.saveFigure(a, "Fächer", "", "", "", listOf(media(a, "content://1"), media(a, "content://2", position = 1)))
-        repo.saveFigure(b, "Hockeystick", "", "", "", listOf(media(b, "content://b")))
+        repo.saveFigure(a, "Fächer", "", "", "", "", listOf(media(a, "content://1"), media(a, "content://2", position = 1)))
+        repo.saveFigure(b, "Hockeystick", "", "", "", "", listOf(media(b, "content://b")))
 
         val keep = repo.observeFigure(a).first()!!.media.first { it.uri == "content://1" }
         repo.saveFigure(
             a, "Fächer neu", "Allgemein", "Führen", "Folgen",
-            listOf(keep, media(a, "https://youtu.be/x", MediaKind.YOUTUBE, position = 1)),
+            "", listOf(keep, media(a, "https://youtu.be/x", MediaKind.YOUTUBE, position = 1)),
         )
 
         val detail = repo.observeFigure(a).first()!!
@@ -163,7 +163,7 @@ class LexikonRepositoryTest {
         val rumba = dance("Latein", "Rumba").id
         val byName = repo.addFigure(rumba, "Fächer")
         val byText = repo.addFigure(rumba, "Hockeystick")
-        repo.saveFigure(byText, "Hockeystick", "", "Aus der Fächerposition führen", "", emptyList())
+        repo.saveFigure(byText, "Hockeystick", "", "Aus der Fächerposition führen", "", "", emptyList())
         val trashed = repo.addFigure(rumba, "Fächer rückwärts")
         repo.trashFigure(trashed, now)
 
@@ -174,5 +174,25 @@ class LexikonRepositoryTest {
         assertNull(danceHit.figureId)
         assertEquals(rumba, danceHit.danceId)
         assertTrue(repo.search("   ").isEmpty())
+    }
+
+    @Test fun saveFigure_storesNote() = runTest {
+        val fig = repo.addFigure(dance("Latein", "Rumba").id, "Fächer")
+        repo.saveFigure(fig, "Fächer", "", "", "", "Linke Hand tiefer", emptyList())
+        assertEquals("Linke Hand tiefer", repo.observeFigure(fig).first()!!.figure.noteText)
+    }
+
+    @Test fun search_findsWordOnlyInNote() = runTest {
+        val fig = repo.addFigure(dance("Latein", "Rumba").id, "Fächer")
+        repo.saveFigure(fig, "Fächer", "", "", "", "Blickkontakt halten", emptyList())
+        assertEquals(listOf(fig), repo.search("blickkontakt").mapNotNull { it.figureId })
+    }
+
+    @Test fun trashAndRestore_keepsNote() = runTest {
+        val fig = repo.addFigure(dance("Latein", "Rumba").id, "Fächer")
+        repo.saveFigure(fig, "Fächer", "", "", "", "Nicht ziehen", emptyList())
+        repo.trashFigure(fig, now)
+        repo.restoreFigure(fig)
+        assertEquals("Nicht ziehen", repo.observeFigure(fig).first()!!.figure.noteText)
     }
 }

@@ -48,7 +48,7 @@ class FigurViewModelTest {
         figureId = await {
             val rumba = repo.observeStart().first().single { it.name == "Latein" }.dances.single { it.name == "Rumba" }.id
             val id = repo.addFigure(rumba, "Fächer")
-            repo.saveFigure(id, "Fächer", "Grundidee", "Führen", "", emptyList())
+            repo.saveFigure(id, "Fächer", "Grundidee", "Führen", "", "", emptyList())
             id
         }
         vm = FigurViewModel(repo, figureId).also(created::add)
